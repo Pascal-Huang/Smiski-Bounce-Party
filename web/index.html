@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bounceback lobby</title>
+<h1>Bounceback</h1>
+<section id="home" hidden>
+<button id="create">Host a Party</button>
+<form id="manual"><label>Room code <input id="roomCode" required pattern="[A-Za-z]{4}" maxlength="4"></label><button>Enter code</button></form>
+</section>
+<section id="room" hidden>
+<h2 id="heading"></h2>
+<div id="invite" hidden><img id="qr" alt="Scan to join the party"><p id="address"></p></div>
+<form id="join" hidden><label>Nickname (optional) <input id="nickname" maxlength="24"></label><button>Join Party</button></form>
+<div id="roster" hidden><h3 id="count"></h3><ul id="players"></ul><h3>Game availability</h3><ul id="games"></ul></div>
+<button id="start" hidden>Start Bumper Cars</button>
+<button id="startTennis" hidden>Start Table Tennis</button>
+<button id="startPogo" hidden>Start Pogo Race</button>
+<div id="motionSetup" hidden><button id="enableMotion">Enable paddle motion</button>
+<button id="useTouch" hidden>Use touch</button>
+<span id="motionStatus" role="status">Hold your phone in your playing grip to calibrate.</span></div>
+<section id="race" hidden>
+<h2 id="gameTitle">Bumper Cars</h2><p id="raceInfo"></p>
+<canvas id="arena" width="760" height="500" style="width:min(100%,760px)" aria-label="Game arena"></canvas>
+<p id="scores"></p><p id="notice" role="status"></p>
+<div id="controls" hidden style="touch-action:none;user-select:none">
+<button id="stick" style="width:42vw;height:140px;border-radius:70px;touch-action:none">Steer</button>
+<button id="boost" style="width:30vw;height:90px;margin-left:8vw;touch-action:none">Boost</button>
+</div>
+<div id="paddle" hidden>
+<label>Aim <select id="lane"><option value="-1">Left</option><option value="0" selected>Centre</option><option value="1">Right</option></select></label>
+<button id="swing" style="min-width:50vw;min-height:100px;touch-action:manipulation">Swing</button>
+</div>
+<button id="back" hidden>Back to lobby</button>
+<div id="pumpPad" hidden><button id="pump" style="min-width:48vw;min-height:96px;touch-action:manipulation">Pump</button>
+<button id="pumpMotion">Enable pump motion</button><p id="pumpStatus" role="status"></p></div>
+</section>
+<a href="/">Back to home</a>
+</section>
+<p role="status" id="status"></p>
+<button id="retry" hidden>Retry</button>
+<script src="/socket.io/socket.io.js"></script><script src="/app.js"></script>
+<script src="/sim.js"></script><script src="/tennis.js"></script><script src="/court.js"></script><script src="/motion.js"></script><script src="/pogo.js"></script><script src="/race.js"></script><script src="/pump.js"></script>
+</html>

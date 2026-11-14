@@ -1,0 +1,26 @@
+{
+  "name": "hackhaven",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alvinyuwen/hackhaven.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/alvinyuwen/hackhaven/issues"
+  },
+  "homepage": "https://github.com/alvinyuwen/hackhaven#readme",
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.4",
+    "socket.io-client": "^4.8.4"
+  }
+}
