@@ -19,7 +19,8 @@ function status(message, retry = false) {
 
 el('home').hidden = Boolean(code);
 el('room').hidden = !code;
-el('heading').textContent = host ? 'Party lobby' : 'Room ' + code;
+el('heading').hidden = host;
+el('heading').textContent = 'Room ' + (code || '');
 el('inviteCode').textContent = code || '';
 el('join').hidden = !code || host;
 el('manual').onsubmit = event => {
@@ -135,7 +136,6 @@ socket.on('roster', ({ players, count, games }) => {
   el('roster').hidden = false;
   el('count').textContent = count + ' / 4 connected';
   renderPillars(el('players'), players);
-  el('gameHeading').hidden = !host;
   const buttons = ['start', 'startTennis', 'startPogo'];
   games.forEach((game, index) => {
     const button = el(buttons[index]);

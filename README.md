@@ -11,7 +11,7 @@ Add a third phone to check the 1v1 restriction. Refresh a phone to confirm it ke
 its name. Close its tab to see the slot reserved for 15 seconds after the server
 detects the disconnect. Four occupied slots block further joins.
 
-With two to four phones connected, select **Start Bumper Cars** on the laptop.
+With two to four phones connected, select **Bumper Cars** on the laptop.
 Hold the phone sideways, drag **Steer** with one thumb, and tap **Boost** with
 the other. Knock another car off the platform to score. Five bumps into opponents
 charge a powered boost, shown by a full pink ring. The round lasts 60 seconds.
@@ -19,7 +19,7 @@ Select **Rematch** to play again or **Back to lobby** to change players.
 Keep the host tab visible while playing. The laptop runs the simulation, and a
 host disconnect returns the room to the lobby. Late joiners wait for the next round.
 
-Select **Start Table Tennis** with two to four phones connected. If more than two
+Select **Table Tennis** with two to four phones connected. If more than two
 are connected, the host chooses the pair. Each player watches
 their own end of the table on the laptop. For motion play, join the room on
 a trusted HTTPS URL. Select **Start calibration** on the host for both phones.

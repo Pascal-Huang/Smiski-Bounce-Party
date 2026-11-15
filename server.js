@@ -40,7 +40,12 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       } catch { res.writeHead(400).end(); }
       return;
     }
-    if (['/lobby.css', '/figures.png', '/bumper-cars.png', '/pogo-riders.png', '/tennis-players.png'].includes(url.pathname)) {
+    if (['/fireside.mp3', '/lobby-2.mp3', '/game-2.mp3', '/game-3.mp3', '/game-4.mp3'].includes(url.pathname)) {
+      res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': require('node:fs').statSync(join(__dirname, 'web', url.pathname.slice(1))).size });
+      require('node:fs').createReadStream(join(__dirname, 'web', url.pathname.slice(1))).pipe(res);
+      return;
+    }
+    if (['/lobby.css', '/room-backdrop.png', '/figures.png', '/bumper-cars.png', '/pogo-riders.png', '/tennis-players.png'].includes(url.pathname)) {
       const file = join(__dirname, 'web', url.pathname.slice(1));
       require('node:fs').readFile(file, (error, data) => {
         if (error) return res.writeHead(404).end();
@@ -48,7 +53,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       });
       return;
     }
-    const script = ['/app.js', '/sim.js', '/race.js', '/tennis.js', '/court.js', '/motion.js', '/pogo.js', '/pump.js'].includes(url.pathname);
+    const script = ['/app.js', '/audio.js', '/sim.js', '/race.js', '/tennis.js', '/court.js', '/motion.js', '/pogo.js', '/pump.js'].includes(url.pathname);
     if (!script && !/^\/(?:play\/[A-Z]{4}|c\/[A-Za-z0-9]{4})?$/.test(url.pathname)) {
       res.writeHead(404).end('Page not found'); return;
     }

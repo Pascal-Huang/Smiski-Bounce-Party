@@ -5,23 +5,23 @@
 <title>Smiski Bounce Party</title>
 <link rel="stylesheet" href="/lobby.css">
 <header class="brand"><a href="/">Smiski Bounce Party</a></header>
+<div id="audioControls" hidden role="group" aria-label="Host audio"><button id="musicToggle" type="button">Music: on</button><button id="effectsToggle" type="button">Effects: on</button></div>
 <main>
 <section id="home" hidden>
-<div class="welcome"><div><h1>Party lobby</h1><button id="create">Host a Party</button>
+<div class="welcome"><div><h1>Party Lobby</h1><button id="create">Host a Party</button>
 <form id="manual"><label>Join with room code <input id="roomCode" placeholder="ABCD" required pattern="[A-Za-z]{4}" maxlength="4" autocapitalize="characters"></label><button>Join room</button></form></div>
 <div id="preview" class="stage" aria-hidden="true"></div></div>
 </section>
 <section id="room" hidden>
-<h1 id="heading">Party lobby</h1>
+<h1 id="heading" hidden></h1>
 <form id="join" hidden><label>Nickname (optional) <input id="nickname" maxlength="24" autocomplete="nickname"></label><button>Join Party</button></form>
 <div class="lobby-grid">
-<div id="roster" hidden><div class="stage-heading"><h2>Player trampolines</h2><span id="count"></span></div><ul id="players" class="stage" aria-label="Player trampolines"></ul></div>
+<div id="roster" hidden><div class="stage-heading"><h1>Party Lobby</h1><span id="count"></span></div><ul id="players" class="stage" aria-label="Players"></ul></div>
 <div class="lobby-sidebar"><aside id="invite" hidden><h2>Join the room</h2><img id="qr" width="160" height="160" alt="Scan with your phone to join"><span>Room code</span><strong id="inviteCode"></strong><p id="address"></p></aside>
-<h2 id="gameHeading" hidden>Choose a game</h2>
 <div class="choices">
-<button id="start" hidden>Start Bumper Cars</button>
-<button id="startTennis" hidden>Start Table Tennis</button>
-<button id="startPogo" hidden>Start Pogo Race</button>
+<button id="start" hidden>Bumper Cars</button>
+<button id="startTennis" hidden>Table Tennis</button>
+<button id="startPogo" hidden>Pogo Race</button>
 </div>
 </div></div>
 <section id="calibration" hidden><h2>Set up your paddles</h2>
@@ -64,5 +64,5 @@
 </div>
 <section class="victory-board"><h2>Final standings</h2><ol id="finalStandings"></ol></section>
 </dialog><script src="/socket.io/socket.io.js"></script><script src="/app.js"></script>
-<script src="/sim.js"></script><script src="/tennis.js"></script><script src="/court.js"></script><script src="/motion.js"></script><script src="/pogo.js"></script><script src="/race.js"></script><script src="/pump.js"></script>
+<script src="/sim.js"></script><script src="/tennis.js"></script><script src="/court.js"></script><script src="/motion.js"></script><script src="/pogo.js"></script><script src="/audio.js"></script><script src="/race.js"></script><script src="/pump.js"></script>
 </html>

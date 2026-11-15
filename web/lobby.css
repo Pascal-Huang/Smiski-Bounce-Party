@@ -1,7 +1,7 @@
 :root { font-family: -apple-system,BlinkMacSystemFont,system-ui,sans-serif; color: #283b37; background: #f2f2e9; }
 #startCount { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; pointer-events: none; background: #f2f2e9aa; font-size: clamp(100px, 27vmin, 260px); font-weight: 800; font-variant-numeric: tabular-nums; }
 * { box-sizing: border-box; }
-[hidden], .in-match #gameHeading, .in-match .lobby-grid { display: none !important; }
+[hidden], .in-match .lobby-grid { display: none !important; }
 body { margin: 0 auto; max-width: 1280px; padding: 0 clamp(16px,5vw,68px) 36px; }
 .brand a { color: inherit; text-decoration: none; }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -.07em; padding: 22px 0; border-bottom: 1px solid #ccd1c9; }
@@ -31,7 +31,7 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 .plinth { width: clamp(66px,10vw,116px); aspect-ratio: 2.7; position: relative; isolation: isolate; border-radius: 50%; background: #85a59b; box-shadow: inset 0 -3px #435d55, inset 0 1px #c1d1c7; }
 .plinth::before { content: ''; position: absolute; inset: 6% 5% 14%; border-radius: 50%; background: radial-gradient(ellipse closest-side, #344d46 83%, transparent 86%), repeating-conic-gradient(#c9d5cc 0deg 4deg, #526b60 5deg 15deg); }
 .plinth::after { content: ''; position: absolute; z-index: -1; top: 76%; bottom: -14%; left: 13%; right: 13%; border: solid #54665e; border-width: 0 3px 2px; border-radius: 0 0 35% 35%; }
-.local-player strong { color: #193c31; background: #fffced; border-radius: 12px; padding-inline: 8px; box-shadow: 0 0 8px 2px #fff3ad; font-weight: 750; }
+.local-player strong { color: #193c31; text-shadow: 0 0 5px #fff3ad; font-weight: 750; }
 @media (prefers-reduced-motion: no-preference) {
   .pillar:not(.away) .figure { transform-origin: center bottom; animation: trampolineHop 1.65s infinite; }
   .pillar:not(.away) .plinth::before { animation: trampolineMat 1.65s infinite; }
@@ -61,20 +61,28 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 #invite span { font-size: .84rem; }
 #inviteCode { display: block; font-size: 36px; letter-spacing: .12em; }
 #address { margin: 8px 0 0; overflow-wrap: anywhere; font-size: .84rem; }
-#gameHeading { margin: 24px 0 12px; }
 .choices { display: flex; flex-wrap: wrap; gap: 10px; }
 .choices button { flex: 1; text-align: left; }
 .choices button::after { display: block; content: attr(data-rule); font-size: .8rem; font-weight: 400; margin-top: 4px; }
 .in-match .choices button::after { display: none; }
 #motionSetup { margin: 18px 0; }
 .calibrating #heading, .calibrating .choices, .calibrating #room > a { display: none; }
-#calibration { max-width: 940px; margin: clamp(24px,8vh,90px) auto; }
+#calibration { max-width: 1160px; margin: clamp(24px,8vh,90px) auto; }
 #calibration h2 { font-size: clamp(30px,5vw,56px); }
 #remoteSteps { display: grid; grid-auto-columns: minmax(0,1fr); grid-auto-flow: column; gap: 12px; }
 #remoteSteps article { background: #fffef6; border: 0 solid; border-top-width: 8px; border-radius: 16px; padding: clamp(14px,3vw,36px); overflow-wrap: anywhere; }
 #remoteSteps h3 { margin: 0; font-size: clamp(20px,3vw,36px); }
 #remoteSteps p { line-height: 1.5; }
 .stroke-arrow { font-size: clamp(56px, 8vw, 96px); line-height: 1.2; font-weight: 700; }
+.forward-stroke { height: 1.2em; display: flex; align-items: center; }
+.forward-stroke::before {
+  content: '';
+  width: .78em;
+  height: 1.08em;
+  background: currentColor;
+  clip-path: polygon(50% 0, 89% 24%, 82% 30%, 54% 14%, 58% 100%, 42% 100%, 46% 14%, 18% 30%, 11% 24%);
+}
+.game-host #remoteSteps article { min-height: clamp(120px, 31dvh, 290px); }
 .calibration-check { color: #307343; }
 #startCalibration { margin-top: 20px; }
 #tennisPicker { color: #283b37; background: #fffef6; border: 1px solid #d1cdc7; border-radius: 20px; padding: 24px; }
@@ -184,7 +192,6 @@ body { padding-bottom: 12px; }
 #qr { width: clamp(96px, 18dvh, 150px); height: auto; margin: 5px auto; }
 #inviteCode { font-size: clamp(25px, 4dvh, 36px); line-height: 1.1; }
 #address { margin-top: 4px; font-size: .76rem; }
-#gameHeading { margin: 3px 4px 0; font-size: 1rem; }
 .choices button:disabled { opacity: 1; background-color: #66796f; }
 .choices { display: grid; gap: 5px; }
 .choices button { position: relative; overflow: hidden; padding: 8px 70px 8px 14px; }
@@ -202,8 +209,7 @@ body { padding-bottom: 12px; }
 #calibration { margin-block: clamp(8px, 3dvh, 32px); }
 @media (max-width: 700px) and (orientation: portrait) {
   .lobby-sidebar { width: 100%; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 5px 10px; }
-  #invite { grid-row: span 2; }
-  #gameHeading { align-self: end; }
+  #invite { grid-row: 1; }
   .choices { align-self: start; }
   .choices button { font-size: .88rem; padding-right: 48px; }
   .choices button::before { height: min(46px, 100%); }
@@ -238,3 +244,110 @@ body { padding-bottom: 12px; }
   .choices button::before { height: min(42px, 100%); }
   #invite span { display: none; }
 }
+
+body { isolation: isolate; }
+body::before {
+  content: '';
+  position: fixed;
+  inset: -1.5%;
+  z-index: -1;
+  pointer-events: none;
+  background: #c4b9b2 url('/room-backdrop.png') center / cover no-repeat;
+}
+@media (prefers-reduced-motion: no-preference) {
+  body::before { animation: roomDrift 32s ease-in-out infinite alternate; }
+}
+@keyframes roomDrift {
+  from { transform: translate(-.5%, .25%); }
+  to { transform: translate(.5%, -.25%) scale(1.012); }
+}
+.brand { border-color: transparent; }
+.brand a, #heading, #gameTitle, #calibration > h2,
+:is(#raceInfo,#scores,#notice,#status,#motionStatus,#pumpStatus):not(:empty) {
+  width: fit-content;
+  max-width: 100%;
+  padding-inline: .45em;
+}
+.welcome > div:first-child, #join { padding: clamp(12px, 2vw, 24px); }
+#calibration > h2 { margin-bottom: clamp(12px, 3dvh, 28px); }
+.bumper-pad #controls { background: transparent; }
+
+#roster, #preview {
+  background: linear-gradient(135deg, rgb(255 254 242 / 51%), rgb(225 235 230 / 31%));
+  backdrop-filter: blur(9px) saturate(110%);
+  -webkit-backdrop-filter: blur(9px) saturate(110%);
+  border-color: rgb(255 255 255 / 66%);
+  box-shadow: inset 0 1px 5px rgb(255 255 255 / 48%), 0 8px 24px rgb(37 47 46 / 13%);
+}
+#players { background: transparent; }
+:is(#players, #preview)::before, :is(#players, #preview)::after { content: none; }
+.stage-heading :is(h1, #count), #players .pillar :is(strong, small) {
+  border-radius: 8px;
+  text-shadow: 0 1px 2px #fffdf0aa;
+  padding-inline: .4em;
+}
+#players .local-player strong { text-shadow: 0 0 5px #fff3ad; }
+
+.brand a, #heading, #gameTitle, #calibration > h2,
+.welcome h1, #manual label, #join label, .stage-heading :is(h1, #count), #players .pillar :is(strong, small),
+:is(#raceInfo, #scores, #notice, #status, #motionStatus, #pumpStatus):not(:empty) {
+  color: #fffdf5;
+  text-shadow: 0 1px 2px #15251f, 0 0 4px #20302b;
+}
+#players .local-player strong {
+  color: #fff4ad;
+  text-shadow: 0 1px 2px #19291f, 0 0 4px #28382b, 0 0 7px #f5df9b;
+}
+
+.stage-heading h1 { margin: 0; font-size: clamp(24px, 4.4dvh, 38px); }
+body:not(.in-match) .brand { font-size: clamp(32px, min(7vw, 7dvh), 68px); line-height: 1.1; }
+body:not(.in-match) .brand a { padding-inline: 0; }
+
+body:not(.in-match):has(#room:not([hidden]) #invite:not([hidden])) .brand {
+  padding-top: clamp(10px, 3.5dvh, 40px);
+  padding-bottom: clamp(14px, 5dvh, 56px);
+}
+#players .figure { width: 145%; left: -22.5%; }
+
+body:has(#home:not([hidden])) {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 12px;
+}
+#home .welcome { margin-block: clamp(12px, 3dvh, 28px) 0; }
+#preview { border: 1px solid rgb(255 255 255 / 66%); }
+#preview .pillar { translate: 0 -12px; }
+#preview .plinth { width: min(10vw, 14dvh, 106px); }
+@media (max-width: 700px) {
+  #preview .plinth { width: clamp(52px, 10vw, 70px); }
+}
+@media (orientation: landscape) and (max-height: 540px) {
+  #home .welcome { margin-top: 6px; }
+  #home .welcome > div:first-child { padding-block: 4px; }
+  #home h1 { margin-block: .2em; }
+  #manual { margin-block: 10px; }
+}
+
+body:has(#home:not([hidden])) .brand { justify-content: center; }
+@media (min-width: 701px), (orientation: landscape) {
+  #home .welcome { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+  #home #preview { grid-column: 1; grid-row: 1; }
+  #home .welcome > div:first-child {
+    grid-column: 2;
+    grid-row: 1;
+    transform: translateY(clamp(-24px, -3dvh, -8px));
+  }
+}
+
+body.in-match::before { background: #f2f2e9; animation: none; }
+.in-match .brand a, .in-match #gameTitle, .in-match #calibration > h2,
+.in-match :is(#heading, #raceInfo, #scores, #notice, #status, #motionStatus, #pumpStatus):not(:empty) {
+  color: #283b37;
+  text-shadow: none;
+}
+
+#audioControls { position: fixed; right: 12px; bottom: 12px; z-index: 20; display: flex; gap: 6px; }
+#audioControls[hidden] { display: none; }
+#audioControls button { font-size: 12px; padding: 8px 12px; background: #f2f2e9; color: #29423c; border: 1px solid #d1cdc7; border-radius: 20px; }

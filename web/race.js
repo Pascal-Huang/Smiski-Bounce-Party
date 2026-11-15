@@ -190,6 +190,21 @@ function draw() {
         ctx.strokeStyle = fill >= BumperSim.boostCapacity ? '#bc267f' : '#ffe7a3'; ctx.stroke();
       }
     }
+    if (c.power && c.dash && !c.out) {
+      ctx.save();
+      ctx.translate(0, -5);
+      ctx.rotate(Math.atan2(c.vy * 2.07, c.vx * 3.35));
+      const reach = 32 + c.dash * 1.8 + 3 * Math.sin(state.tick * 2);
+      for (const [color, width, length] of [['#2679ff', 9, reach], ['#66dfff', 6, reach * .8], ['#e3ffff', 3, reach * .6]]) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(-14, -width);
+        ctx.quadraticCurveTo(-30, -width, -length, 0);
+        ctx.quadraticCurveTo(-30, width, -14, width);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
     if (bumperCars.complete && bumperCars.naturalWidth) {
       // Columns start at east and turn clockwise in screen coordinates.
       const direction = (Math.round(Math.atan2(c.dy, c.dx) / (Math.PI / 4)) + 8) % 8;
@@ -256,6 +271,7 @@ function renderStandings(board, sorted, metric, unit) {
 }
 
 function display() {
+  PartyAudio.observe(match.game, state, countdown);
   const count = el('startCount');
   const digit = countdown > 0 ? String(Math.ceil(countdown / 1000)) : '';
   count.hidden = !digit;
@@ -322,6 +338,7 @@ function run() {
     else debt += Math.min(elapsed, 250);
     while (debt >= 1000 / 60 && !finished()) {
       sim.step(state, inputs);
+      PartyAudio.observe(match.game, state, countdown);
       Object.values(inputs).forEach(input => { input.boost = false; input.swing = false; input.pump = false; });
       debt -= 1000 / 60;
     }
@@ -339,6 +356,7 @@ function rememberSprite(slot, sheet, frame, cell, x, y, size, flipped = false) {
   winnerSprites.set(slot, { sheet, frame, cell, x, y, size, flipped });
 }
 function showVictory() {
+  PartyAudio.cue('win');
   const players = tennis() ? state.players : pogo() ? state.riders : state.cars;
   const best = pogo() ? 0 : Math.max(...players.map(p => p.score));
   const winners = tennis() ? [players[state.winner]] : players.filter(p =>
@@ -426,8 +444,9 @@ function renderCalibration() {
     else {
       const gesture = strokes[(p.step - 1) % strokes.length];
       const arrow = document.createElement('div');
-      arrow.className = 'stroke-arrow';
-      arrow.textContent = gesture.arrow;
+      arrow.className = gesture.lane === 0 ? 'stroke-arrow forward-stroke' : 'stroke-arrow';
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.textContent = gesture.arrow || '';
       arrow.setAttribute('aria-hidden', 'true');
       panel.append(arrow);
       instruction.textContent = (p.step <= 3 ? 'Round 1 · Learn' : 'Round 2 · Confirm') +
@@ -442,13 +461,14 @@ function renderCalibration() {
 }
 function show(next) {
   if (next?.id !== match?.id || next?.phase !== match?.phase) scrollToTop();
-  if (next?.id !== match?.id) winnerSprites.clear();
+  if (next?.id !== match?.id) { winnerSprites.clear(); PartyAudio.reset(); }
   if (next?.phase !== 'results' && el('victory').open) el('victory').close();
   cancelAnimationFrame(animation);
   const resetMotion = next?.id !== match?.id || next?.phase === 'results';
   const beginCalibration = next?.phase === 'calibration' && next.calibrationStarted &&
     (next.id !== match?.id || !match?.calibrationStarted);
   match = next;
+  PartyAudio.setScene(next ? next.phase : 'lobby');
   if (resetMotion) paddleSetup.stop('');
   if (beginCalibration && myCar()) paddleSetup.begin();
   const setup = match?.phase === 'calibration';
@@ -471,9 +491,9 @@ function show(next) {
   if (el('pumpPad').hidden) stopPumpMotion();
   el('gameTitle').textContent = match?.game || '';
   el('back').hidden = !host || !match || playing;
-  el('start').textContent = match ? 'Rematch' : 'Start Bumper Cars';
-  el('startTennis').textContent = match ? 'Rematch' : 'Start Table Tennis';
-  el('startPogo').textContent = match ? 'Rematch' : 'Start Pogo Race';
+  el('start').textContent = match ? 'Rematch' : 'Bumper Cars';
+  el('startTennis').textContent = match ? 'Rematch' : 'Table Tennis';
+  el('startPogo').textContent = match ? 'Rematch' : 'Pogo Race';
   el('roster').style.display = match ? 'none' : '';
   el('invite').style.display = match ? 'none' : '';
   el('start').style.display = playing || tennis() || pogo() ? 'none' : '';

@@ -142,6 +142,25 @@ function drawTrack(ctx, s, colors) {
     const x = screenX(positions[i]);
     const height = (19 + r.jump * 1.65) * 4 * progress * (1 - progress);
     ctx.fillStyle = '#96aaa0'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
+    if (s.phase === 'air' && r.charge === PogoSim.cap) {
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.globalAlpha = .85 * Math.sin(progress * Math.PI);
+      for (let strand = 0; strand < 3; strand++) {
+        ctx.beginPath();
+        for (let sample = 0; sample <= 8; sample++) {
+          const t = Math.max(0, progress - sample * (.022 + strand * .005));
+          const trailX = screenX(r.distance + r.jump * t) - 10 - strand * 3;
+          const trailY = y - 26 - strand * 6 - (19 + r.jump * 1.65) * 4 * t * (1 - t);
+          if (sample === 0) ctx.moveTo(trailX, trailY);
+          else ctx.lineTo(trailX, trailY);
+        }
+        ctx.strokeStyle = strand === 1 ? '#b4e8ec' : '#fffefa';
+        ctx.lineWidth = strand === 1 ? 3 : 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (pogoRiders.complete && pogoRiders.naturalWidth) {
       const frame = pogoFrame(s, r);
       rememberSprite(r.slot, pogoRiders, frame, 128, x, y - height - 33, 72);

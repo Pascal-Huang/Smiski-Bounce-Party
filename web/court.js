@@ -82,6 +82,15 @@ function drawCourt(ctx, state) {
     if (depth >= 0 && depth <= 1 && Math.abs(lateral) <= 1) {
       ctx.fillStyle = '#593f30'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();
     }
+    if (!state.pause && state.players[state.hitter].superSmash && state.duration === 33) {
+      for (let i = 6; i > 0; i--) {
+        const t = Math.max(0, travel - i * .026);
+        const [x,y] = project(state.from + (state.to - state.from) * Math.min(1,t), state.hitter ? 1-t : t);
+        const trailY = y - 8 - 40 * Math.abs(Math.sin(Math.PI * (t + .25)));
+        ctx.fillStyle = i > 3 ? '#f04b27' : '#ff9a22';
+        ctx.beginPath(); ctx.arc(x, trailY, 9-i, 0, Math.PI*2); ctx.fill();
+      }
+    }
     ctx.fillStyle = '#ffbb3c'; ctx.beginPath(); ctx.arc(bx,by-height,8,0,Math.PI*2); ctx.fill();
     ctx.fillStyle = '#182f3a'; ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif';
     const center = 190 + side * 380;

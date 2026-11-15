@@ -1,7 +1,7 @@
 // Learn signed acceleration directions in the phone's own coordinate system.
 const strokes = [
   { lane: -1, label: 'swing left', arrow: '←' }, { lane: 1, label: 'swing right', arrow: '→' },
-  { lane: 0, label: 'push forward toward the host screen', arrow: '↑' }
+  { lane: 0, label: 'push forward toward the host screen' }
 ];
 const dot = (a, b) => a.reduce((sum, n, i) => sum + n * b[i], 0);
 function classify(vector, templates) {
