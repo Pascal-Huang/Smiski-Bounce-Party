@@ -101,6 +101,8 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 
 #victory { overflow: visible; padding: 0; border: 0; background: transparent; color: #263c33; width: min(92vw, 900px); text-align: center; }
 #victory::backdrop { background: rgb(242 242 233 / 68%); }
+#victory:focus { outline: none; }
+#victory { -webkit-tap-highlight-color: transparent; }
 .victory-body { position: relative; padding: clamp(20px,4vw,42px); }
 .victory-body::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #fffef6; border: 1px solid #d1cdc7; border-radius: 28px; box-shadow: 0 12px 42px #324b3812; }
 #victoryPortraits { display: flex; justify-content: center; gap: 6px; }
@@ -116,7 +118,7 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
   #victoryTitle, #victoryScore, #victoryActions { animation: victoryFade 320ms 750ms backwards; }
 }
 #victory[open] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: center; }
-.victory-body { isolation: isolate; --entry-x: calc(-50% - 10px); --entry-y: 0px; }
+.victory-body { isolation: isolate; --entry-x: calc(50% + 10px); --entry-y: 0px; }
 .victory-board { padding: clamp(16px,3vw,30px); border: 1px solid #d1cdc7; border-radius: 28px; background: #fffef6; text-align: left; }
 .victory-board h2 { margin: 0 0 12px; }
 #victoryConfetti { position: absolute; left: 50%; top: 33%; z-index: 2; pointer-events: none; }
@@ -127,7 +129,7 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
   61% { transform: translate(var(--entry-x), var(--entry-y)) scale(.985); }
   100% { transform: none; }
 }
-@keyframes standingsEnter { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@keyframes standingsEnter { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
 @media (max-width: 620px) {
   #victory[open] { grid-template-columns: 1fr; gap: 10px; max-height: 92dvh; overflow: auto; }
   .victory-body { grid-row: 1; --entry-x: 0px; --entry-y: min(12vh,76px); }
