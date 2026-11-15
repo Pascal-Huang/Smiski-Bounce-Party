@@ -1,7 +1,7 @@
 // Learn signed acceleration directions in the phone's own coordinate system.
 const strokes = [
-  { lane: -1, label: 'swing left' }, { lane: 1, label: 'swing right' },
-  { lane: 0, label: 'push forward' }
+  { lane: -1, label: 'swing left', arrow: '←' }, { lane: 1, label: 'swing right', arrow: '→' },
+  { lane: 0, label: 'push forward toward the host screen', arrow: '↑' }
 ];
 const dot = (a, b) => a.reduce((sum, n, i) => sum + n * b[i], 0);
 function classify(vector, templates) {
@@ -37,9 +37,6 @@ function strokeSampler() {
 }
 
 const paddleMotion = { active: false, lane: 0 };
-function refreshPaddle() {
-  el('paddle').hidden = paddleMotion.active || !tennis() || match.phase !== 'playing' || !myCar();
-}
 function installMotion() {
   let session = 0, cleanup = () => {};
   function stop(message) {
@@ -49,34 +46,39 @@ function installMotion() {
     paddleMotion.active = false;
     paddleMotion.lane = 0;
     el('enableMotion').disabled = false;
-    el('enableMotion').textContent = 'Enable paddle motion';
-    el('useTouch').hidden = true;
+    el('enableMotion').hidden = true;
     el('motionStatus').textContent = message;
-    refreshPaddle();
     stroke(false);
   }
-  el('useTouch').onclick = () => stop('Touch controls selected.');
-  el('enableMotion').onclick = async () => {
+  function progress(step) {
+    if (match?.phase === 'calibration') socket.emit('calibration', { id: match.id, step });
+  }
+  function retry(message, label) {
+    stop(message);
+    el('enableMotion').textContent = label;
+    el('enableMotion').hidden = false;
+  }
+  async function begin() {
     stop('Hold still in your playing grip.');
     const current = session;
     if (!window.isSecureContext) return stop('Open the room over trusted HTTPS to enable motion.');
     const sensors = [window.DeviceMotionEvent];
-    if (sensors.some(sensor => !sensor)) return stop('This browser has no paddle sensors. Touch controls are available.');
+    if (sensors.some(sensor => !sensor)) return stop('Open this room on a phone with motion sensors.');
     el('enableMotion').disabled = true;
     try {
       const permissions = await Promise.all(sensors.map(sensor => sensor.requestPermission?.()));
       if (session !== current) return;
-      if (permissions.includes('denied')) return stop('Motion permission was denied. Enable it in browser settings or use touch.');
-    } catch { if (session === current) stop('Motion permission unavailable. Try again or use touch.'); return; }
+      if (permissions.includes('denied')) return retry('Allow motion access for this site in your browser settings.', 'Allow motion access');
+    } catch { if (session === current) retry('Your phone needs permission to read swings.', 'Allow motion access'); return; }
     const templates = [];
     let verified = 0;
     const sample = strokeSampler();
-    const prompt = () => paddleMotion.active ? 'Ready. Swing left, swing right, or push forward.'
-      : 'Pause in your grip, then ' + strokes[templates.length < 3 ? templates.length : verified].label
-        + (templates.length < 3 ? '.' : ' again to verify.');
-    el('motionStatus').textContent = prompt();
-    el('useTouch').hidden = false;
-    const timeout = setTimeout(() => stop('No linear acceleration readings. Retry or use touch.'), 6500);
+    progress(1);
+    el('motionStatus').textContent = '';
+    const timeout = setTimeout(() => {
+      retry('No motion readings. Check motion access and retry.', 'Retry sensor');
+      progress(0);
+    }, 6500);
     function movement(event) {
       const a = event.acceleration;
       if (!a || ![a.x, a.y, a.z].every(Number.isFinite)) return;
@@ -86,40 +88,41 @@ function installMotion() {
       if (!v) return;
       if (templates.length < 3) {
         if (templates.some(t => dot(t, v) > 0.65)) {
-          el('motionStatus').textContent = 'Too similar to an earlier stroke. ' + prompt();
+          el('motionStatus').textContent = 'That felt like the previous direction. Pause and try this stroke again.';
           return;
         }
         templates.push(v);
+        progress(templates.length + 1);
+        el('motionStatus').textContent = '';
       } else {
         const index = classify(v, templates);
-        if (paddleMotion.active) {
-          if (index < 0) return;
-          paddleMotion.lane = strokes[index].lane;
-          el('motionStatus').textContent = 'Detected: ' + strokes[index].label;
-          stroke(true, paddleMotion.lane);
+        if (!paddleMotion.active) {
+          if (index !== verified) {
+            el('motionStatus').textContent = 'Pause and try the direction shown again.';
+            return;
+          }
+          const combined = templates[index].map((value, i) => value + v[i]);
+          const length = Math.hypot(...combined);
+          templates[index] = combined.map(value => value / length);
+          verified++;
+          paddleMotion.active = verified === strokes.length;
+          progress(4 + verified);
+          el('motionStatus').textContent = '';
           return;
         }
-        if (index !== verified) {
-          templates.length = 0;
-          verified = 0;
-          el('motionStatus').textContent = 'Direction check failed. Start again. ' + prompt();
-          return;
-        }
-        if (++verified === 3) {
-          paddleMotion.active = true;
-          el('enableMotion').disabled = false;
-          el('enableMotion').textContent = 'Recalibrate grip';
-          refreshPaddle();
-        }
+        if (index < 0) return;
+        paddleMotion.lane = strokes[index].lane;
+        stroke(true, paddleMotion.lane);
       }
-      el('motionStatus').textContent = prompt();
     }
     window.addEventListener('devicemotion', movement);
     cleanup = () => {
       clearTimeout(timeout);
       window.removeEventListener('devicemotion', movement);
     };
-  };
+  }
+  el('enableMotion').onclick = begin;
+  return { begin, stop };
 }
-if (typeof window !== 'undefined') installMotion();
+const paddleSetup = typeof window !== 'undefined' && installMotion();
 if (typeof module !== 'undefined') module.exports = { classify, strokeSampler };

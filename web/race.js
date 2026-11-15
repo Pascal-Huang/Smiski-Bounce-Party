@@ -9,19 +9,53 @@ const tennis = () => match?.game === 'Table Tennis';
 const pogo = () => match?.game === 'Pogo Race';
 const simulation = () => pogo() ? PogoSim : tennis() ? TennisSim : BumperSim;
 el('startPogo').onclick = () => start('Pogo Race');
-function stroke(swing, lane = Number(el('lane').value)) {
+function stroke(swing, lane = paddleMotion.lane) {
   if (socket.connected && tennis() && myCar() && match.phase === 'playing')
     socket.emit('input', { id: match.id, lane, swing });
 }
-el('lane').onchange = () => stroke(false);
-el('swing').onclick = () => stroke(true);
 el('start').onclick = () => start('Bumper Cars');
 el('startTennis').onclick = () => start('Table Tennis');
-async function start(game) {
+function chosenSlots() {
+  return Array.from(el('tennisChoices').querySelectorAll(':checked'), input => Number(input.value));
+}
+function updatePair() {
+  const full = chosenSlots().length === 2;
+  el('confirmPair').disabled = !full;
+  for (const input of el('tennisChoices').querySelectorAll('input')) input.disabled = full && !input.checked;
+}
+function renderTennisChoices() {
+  const selected = chosenSlots();
+  el('tennisChoices').replaceChildren(...connectedPlayers.map(p => {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = p.slot;
+    input.checked = selected.includes(p.slot);
+    label.append(input, ' ' + badges[p.slot] + ' ' + p.name);
+    return label;
+  }));
+  updatePair();
+}
+el('tennisChoices').onchange = updatePair;
+el('cancelPair').onclick = () => el('tennisPicker').close();
+el('confirmPair').onclick = () => start('Table Tennis', chosenSlots());
+async function start(game, slots) {
+  const picker = el('tennisPicker');
+  if (game === 'Table Tennis' && connectedPlayers.length > 2 && !slots) {
+    el('tennisChoices').replaceChildren();
+    el('pickerError').textContent = '';
+    renderTennisChoices();
+    picker.showModal();
+    return;
+  }
   try {
-    const result = await socket.timeout(4000).emitWithAck('start', game);
-    if (result.error) status(result.error);
-  } catch { status('Could not start. Check the connection and retry.'); }
+    const result = await socket.timeout(4000).emitWithAck('start', slots ? { game, slots } : game);
+    if (result.error) throw new Error(result.error);
+    if (picker.open) picker.close();
+  } catch (error) {
+    if (picker.open) el('pickerError').textContent = error.message;
+    else status(error.message);
+  }
 };
 el('back').onclick = () => socket.emit('lobby');
 function send(boost = false) {
@@ -177,6 +211,10 @@ function renderStandings(board, sorted, metric, unit) {
 }
 
 function display() {
+  const count = el('startCount');
+  const digit = countdown > 0 ? String(Math.ceil(countdown / 1000)) : '';
+  count.hidden = !digit;
+  if (count.textContent !== digit) count.textContent = digit;
   if (pogo()) {
     if (host) {
       drawTrack(ctx, state, playerColors);
@@ -202,7 +240,7 @@ function display() {
     }
     el('raceInfo').textContent = state.winner !== null ? '' : !host && !myCar() ? 'Waiting for next round' :
       countdown > 0 ? 'Starting in ' + Math.ceil(countdown / 1000) :
-      state.pause ? state.players[state.hitter].name + ' serves' : 'Swing when the ball reaches your end';
+      state.pause ? state.players[state.hitter].name + ' serves' : '';
     el('scores').textContent = '';
     el('notice').textContent = state.notice;
     return;
@@ -315,11 +353,59 @@ function showVictory() {
 }
 el('victoryRematch').onclick = () => start(match.game);
 el('victoryLobby').onclick = () => socket.emit('lobby');
+el('cancelSetup').onclick = () => socket.emit('lobby');
+el('startCalibration').onclick = () => socket.emit('startCalibration', match.id);
+function renderCalibration() {
+  const own = myCar();
+  const remotes = own ? [own] : match.players;
+  el('remoteSteps').replaceChildren(...remotes.map(p => {
+    const panel = document.createElement('article');
+    panel.style.borderColor = playerColors[p.slot];
+    const title = document.createElement('h3');
+    title.textContent = p.name;
+    panel.append(title);
+    const instruction = document.createElement('p');
+    if (p.step === 7) {
+      const check = document.createElement('div');
+      check.className = 'stroke-arrow calibration-check';
+      check.textContent = '✓';
+      check.setAttribute('aria-hidden', 'true');
+      panel.append(check);
+      instruction.textContent = match.players.every(p => p.step === 7)
+        ? 'Complete · Starting game…' : 'Complete · Waiting for the other paddle';
+    }
+    else if (!p.step) instruction.textContent = match.calibrationStarted ? 'Waiting for phone motion access…' :
+      'Face the host screen and hold your phone edge-on. The host starts both paddles together.';
+    else {
+      const gesture = strokes[(p.step - 1) % strokes.length];
+      const arrow = document.createElement('div');
+      arrow.className = 'stroke-arrow';
+      arrow.textContent = gesture.arrow;
+      arrow.setAttribute('aria-hidden', 'true');
+      panel.append(arrow);
+      instruction.textContent = (p.step <= 3 ? 'Round 1 · Learn' : 'Round 2 · Confirm') +
+        ' · Pause, then ' + gesture.label + '.';
+    }
+    panel.append(instruction);
+    return panel;
+  }));
+  el('motionSetup').hidden = !own || own.step === 7;
+  el('cancelSetup').hidden = !host;
+  el('startCalibration').hidden = !host || match.calibrationStarted === true;
+}
 function show(next) {
   if (next?.id !== match?.id) winnerSprites.clear();
   if (next?.phase !== 'results' && el('victory').open) el('victory').close();
   cancelAnimationFrame(animation);
+  const resetMotion = next?.id !== match?.id || next?.phase === 'results';
+  const beginCalibration = next?.phase === 'calibration' && next.calibrationStarted &&
+    (next.id !== match?.id || !match?.calibrationStarted);
   match = next;
+  if (resetMotion) paddleSetup.stop('');
+  if (beginCalibration && myCar()) paddleSetup.begin();
+  const setup = match?.phase === 'calibration';
+  el('calibration').hidden = !setup;
+  document.body.classList.toggle('calibrating', setup);
   document.body.classList.toggle('in-match', Boolean(match));
   inputs = {};
   release();
@@ -330,14 +416,11 @@ function show(next) {
   document.body.classList.toggle('game-host', Boolean(match && host));
   document.body.classList.toggle('motion-pad', Boolean(!host && !bumper && playing && myCar()));
   el('gameHud').hidden = !match || !host;
-  el('race').hidden = !match;
+  el('race').hidden = !match || setup;
   el('arena').hidden = !host;
   el('controls').hidden = tennis() || pogo() || !playing || !myCar();
   el('pumpPad').hidden = !pogo() || !playing || !myCar();
   if (el('pumpPad').hidden) stopPumpMotion();
-  el('motionSetup').hidden = !playerId || !socket.connected || (match && !(tennis() && playing && myCar()));
-  refreshPaddle();
-  el('lane').value = '0';
   el('gameTitle').textContent = match?.game || '';
   el('back').hidden = !host || !match || playing;
   el('start').textContent = match ? 'Rematch' : 'Start Bumper Cars';
@@ -349,6 +432,7 @@ function show(next) {
   el('startPogo').style.display = playing || (match && !pogo()) ? 'none' : '';
   el('startTennis').style.display = playing || (match && !tennis()) ? 'none' : '';
   if (!match) return;
+  if (setup) { renderCalibration(); return; }
   if (tennis() && playing && paddleMotion.active) stroke(false, paddleMotion.lane);
   countdown = playing ? 3000 : 0;
   state = match.result || simulation().create(match.players);

@@ -20,8 +20,25 @@ function drawTennisPlayer(ctx, player, tick, x, feet) {
   ctx.restore();
 }
 
+function drawRhythm(ctx, player, center, tick) {
+  const feedback = tick - player.gradeTick < 52;
+  const color = player.superSmash ? '#bc267f' : player.grade === 'Perfect' ? '#a37100' :
+    player.grade?.startsWith('Very') ? '#a34239' : '#945d13';
+  if (feedback) {
+    ctx.fillStyle = color; ctx.font = 'bold 18px system-ui';
+    ctx.fillText(player.superSmash ? 'Supersmash' : player.grade, center, 125);
+  }
+  ctx.fillStyle = '#31463c'; ctx.font = 'bold 15px system-ui';
+  ctx.fillText(player.charge === 3 ? 'Supersmash ready' : 'Smash  ' + player.charge + ' / 3', center, 465);
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < player.charge ? '#d7a11e' : '#cdd5cb';
+    ctx.beginPath(); ctx.roundRect(center - 58 + i * 40, 474, 36, 9, 4); ctx.fill();
+  }
+}
+
 function drawCourt(ctx, state) {
   ctx.clearRect(0, 0, 760, 500);
+  ctx.fillStyle = '#b5b9af'; ctx.fillRect(379, 10, 2, 478);
   const travel = Math.min(1.12, state.flight / state.duration);
   const depth = state.hitter === 0 ? travel : 1 - travel;
   const lateral = state.from + (state.to - state.from) * Math.min(1, travel);
@@ -40,7 +57,7 @@ function drawCourt(ctx, state) {
       const foot = project(edge, side);
       line(foot, [foot[0], foot[1] + 26], '#84998f', 7);
     }
-    ctx.fillStyle = '#63867b';
+    ctx.fillStyle = '#906344';
     ctx.beginPath();
     for (const [i, point] of [[-1,0],[1,0],[1,1],[-1,1]].entries()) {
       if (i === 0) ctx.moveTo(...project(...point)); else ctx.lineTo(...project(...point));
@@ -57,19 +74,18 @@ function drawCourt(ctx, state) {
     line(net[0],net[1],'#425d54',2);
     line([net[0][0], netY - 13], [net[1][0], netY - 13], '#f2f2e9', 3);
     const target = 1 - state.hitter === side;
-    const inZone = target && travel >= 0.8 && travel <= 1.12 && !state.attempted && state.winner === null;
-    line(project(-1,side),project(1,side),inZone ? '#f0a500' : '#d4eae8',6);
+    line(project(-1,side),project(1,side),'#eadccc',6);
     const [px, py] = project(target ? state.to : state.from, side);
     drawTennisPlayer(ctx, player, state.winner === null ? state.tick : Infinity, px, py + 24);
     const [bx, by] = project(lateral, depth);
     const height = 8 + 40 * Math.abs(Math.sin(Math.PI * (travel + 0.25)));
-    ctx.fillStyle = '#193d44'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();
+    if (depth >= 0 && depth <= 1 && Math.abs(lateral) <= 1) {
+      ctx.fillStyle = '#593f30'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();
+    }
     ctx.fillStyle = '#ffbb3c'; ctx.beginPath(); ctx.arc(bx,by-height,8,0,Math.PI*2); ctx.fill();
     ctx.fillStyle = '#182f3a'; ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif';
     const center = 190 + side * 380;
-    ctx.fillText(player.name, center, 95, 350);
-    ctx.font = '16px sans-serif';
-    ctx.fillText('Aim ' + ['left','centre','right'][player.lane + 1] + (player.smash ? ' · Smash ready' : ''),center,125);
-    ctx.fillText(inZone ? 'Swing now' : '',center,445);
+    ctx.fillText(player.name, center, 48, 350);
+    drawRhythm(ctx, player, center, state.tick);
   });
 }

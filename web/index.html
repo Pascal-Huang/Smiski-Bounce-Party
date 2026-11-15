@@ -24,10 +24,14 @@
 <button id="startTennis" hidden>Start Table Tennis</button>
 <button id="startPogo" hidden>Start Pogo Race</button>
 </div>
-<div id="motionSetup" hidden><button id="enableMotion">Enable paddle motion</button>
-<button id="useTouch" hidden>Use touch</button>
-<span id="motionStatus" role="status">Hold your phone in your playing grip to calibrate.</span></div>
+<section id="calibration" hidden><h2>Set up your paddles</h2>
+<div id="remoteSteps" aria-live="polite"></div>
+<button id="startCalibration" hidden>Start calibration</button>
+<div id="motionSetup" hidden><button id="enableMotion" hidden>Allow motion access</button>
+<p id="motionStatus" role="status"></p></div>
+<button id="cancelSetup" hidden>Back to lobby</button></section>
 <section id="race" hidden>
+<div id="startCount" hidden role="status"></div>
 <h2 id="gameTitle">Bumper Cars</h2><p id="raceInfo"></p>
 <div class="arena-layout">
 <canvas id="arena" width="760" height="500" style="width:min(100%,760px)" aria-label="Game arena"></canvas>
@@ -41,10 +45,6 @@
 <button id="stick" aria-label="Steering joystick"><span id="thumb"></span></button>
 <button id="boost">Boost</button>
 </div>
-<div id="paddle" hidden>
-<label>Aim <select id="lane"><option value="-1">Left</option><option value="0" selected>Centre</option><option value="1">Right</option></select></label>
-<button id="swing">Swing</button>
-</div>
 <button id="back" hidden>Back to lobby</button>
 <div id="pumpPad" hidden><button id="pump">Pump</button>
 <button id="pumpMotion">Enable pump motion</button><p id="pumpStatus" role="status"></p></div>
@@ -54,6 +54,10 @@
 <p role="status" id="status"></p>
 <button id="retry" hidden>Retry</button>
 </main>
+<dialog id="tennisPicker" aria-labelledby="pickerTitle">
+<h2 id="pickerTitle">Choose two players</h2><div id="tennisChoices"></div>
+<p id="pickerError" role="status"></p><button id="confirmPair" disabled>Continue to calibration</button>
+<button id="cancelPair">Cancel</button></dialog>
 <dialog id="victory" aria-labelledby="victoryTitle">
 <div class="victory-body"><div id="victoryConfetti" aria-hidden="true"></div>
 <div id="victoryPortraits"></div><h2 id="victoryTitle"></h2><p id="victoryScore"></p>

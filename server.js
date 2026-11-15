@@ -17,7 +17,7 @@ function snapshot(room) {
   }] : []);
   const count = players.filter(p => p.connected).length;
   const games = ['Bumper Cars', 'Table Tennis', 'Pogo Race'].map(name => ({
-    name, eligible: name === 'Table Tennis' ? count === 2 : count >= 2, implemented: true
+    name, eligible: count >= 2, implemented: true
   }));
   return { players, count, games };
 }
@@ -94,18 +94,52 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       ack({ token: player?.token, name: player?.name, id: player?.id, slot: player ? room.players.indexOf(player) : undefined, addresses: host ? addresses() : undefined });
       if (room.match) socket.emit('match', room.match);
       broadcast(code, room);
-      socket.on('start', (name, reply) => {
+      socket.on('start', (request, reply) => {
         if (typeof reply !== 'function') return;
+        const name = typeof request === 'string' ? request : request?.game;
         const game = snapshot(room).games.find(g => g.name === name);
         if (!host) return reply({ error: 'Host access required.' });
         if (!game?.eligible) return reply({ error: 'Player count unavailable.' });
         if (!game.implemented) return reply({ error: 'Game not implemented.' });
-        if (room.match?.phase === 'playing') return reply({ error: 'Round already running.' });
+        if (room.match && room.match.phase !== 'results') return reply({ error: 'Round already running.' });
+        let players = room.players.flatMap((p, slot) => p?.socket ? [{ slot, id: p.id, name: p.name }] : []);
+        if (name === 'Table Tennis') {
+          const slots = request.slots;
+          if (slots !== undefined) {
+            if (!Array.isArray(slots) || slots.length !== 2) return reply({ error: 'Choose two connected players.' });
+            players = players.filter(p => slots.includes(p.slot));
+          }
+          if (players.length !== 2) return reply({ error: 'Choose two connected players.' });
+        }
         room.driver = socket.id;
-        room.match = { id: randomUUID(), game: name, driver: socket.id, phase: 'playing', players: room.players.flatMap((p, slot) =>
-          p?.socket ? [{ slot, id: p.id, name: p.name }] : []) };
+        room.match = { id: randomUUID(), game: name, driver: socket.id, phase: 'playing', players };
+        if (name === 'Table Tennis') {
+          room.match.phase = 'calibration';
+          room.match.players.forEach(p => { p.step = 0; });
+        }
         io.to(code).emit('match', room.match);
         reply({ ok: true });
+      });
+      socket.on('startCalibration', id => {
+        const match = room.match;
+        if (!host || match?.phase !== 'calibration' || match.id !== id || match.calibrationStarted) return;
+        match.calibrationStarted = true;
+        io.to(code).emit('match', match);
+      });
+      socket.on('calibration', data => {
+        const match = room.match;
+        if (match?.phase !== 'calibration' || !match.calibrationStarted || data?.id !== match.id || player?.socket !== socket.id) return;
+        const remote = match.players.find(p => p.id === player.id);
+        if (!remote || remote.step === 7 || !Number.isInteger(data.step) || data.step < 0 || data.step > 7) return;
+        remote.step = data.step;
+        io.to(code).emit('match', match);
+        if (match.players.every(p => p.step === 7)) {
+          setTimeout(() => {
+            if (room.match !== match || match.phase !== 'calibration') return;
+            match.phase = 'playing';
+            io.to(code).emit('match', match);
+          }, 900).unref();
+        }
       });
       socket.on('input', data => {
         const match = room.match;
@@ -137,13 +171,15 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         } else socket.to(code).emit('frame', frame);
       });
       socket.on('lobby', () => {
-        if (host && room.match?.phase === 'results') {
+        if (host && ['results', 'calibration'].includes(room.match?.phase)) {
           room.match = null;
           io.to(code).emit('match', null);
         }
       });
       socket.on('disconnect', () => {
-        if (room.driver === socket.id && room.match?.phase === 'playing') {
+        const calibrating = room.match?.phase === 'calibration';
+        const lostRemote = calibrating && room.match.players.some(p => p.id === player?.id);
+        if (lostRemote || (room.driver === socket.id && (calibrating || room.match?.phase === 'playing'))) {
           room.match = null;
           io.to(code).emit('match', null);
         }

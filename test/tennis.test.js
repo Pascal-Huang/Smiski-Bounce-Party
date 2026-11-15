@@ -30,15 +30,30 @@ test('misses award points, alternate service and stop at seven without deuce', (
   assert.equal(s.tick, last);
 });
 
-test('two lost points grant one Rubber Smash that a perfect return spends', () => {
-  const s = create(players);
-  for (let i = 0; i < 2; i++) {
-    s.hitter = 0; s.pause = 0; s.flight = s.duration * 1.12;
-    step(s, {});
+test('the five grades set return speed and only perfects build charge', () => {
+  for (const [flight, grade, duration] of [[81,'Very early',86], [88,'Early',68], [96,'Perfect',50], [104,'Late',68], [111,'Very late',86]]) {
+    const s = create(players);
+    Object.assign(s, { pause: 0, flight: flight - 1, duration: 100 });
+    step(s, { 3: { swing: true } });
+    assert.equal(s.players[1].grade, grade);
+    assert.equal(s.duration, duration);
+    assert.equal(s.players[1].charge, Number(grade === 'Perfect'));
   }
-  assert.equal(s.players[1].smash, true);
-  s.pause = 0; s.flight = 83;
-  step(s, { 3: { swing: true, lane: 1 } });
-  assert.equal(s.duration, 41);
-  assert.equal(s.players[1].smash, false);
+});
+
+test('charge survives a lost point and the fourth perfect fires one Super Smash', () => {
+  const s = create(players);
+  for (let i = 1; i <= 4; i++) {
+    Object.assign(s, { hitter: 0, pause: 0, duration: 100, flight: 95 });
+    step(s, { 3: { swing: true } });
+    assert.equal(s.players[1].charge, i % 4);
+    assert.equal(s.duration, i === 4 ? 33 : 50);
+    if (i === 2) {
+      s.hitter = 0; s.flight = s.duration * 1.12;
+      step(s, {});
+      assert.equal(s.players[1].charge, 2);
+    }
+  }
+  assert.equal(s.players[1].superSmash, true);
+  assert.equal(s.players[0].charge, 0);
 });

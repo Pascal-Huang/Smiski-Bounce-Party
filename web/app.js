@@ -57,7 +57,6 @@ async function enter() {
       status('');
     } else {
       storage.setItem(key, result.token);
-      el('motionSetup').hidden = false;
       el('join').hidden = true;
       status('Joined as ' + result.name);
     }
@@ -107,7 +106,10 @@ function renderPillars(stage, players, preview = false) {
 }
 if (!code) renderPillars(el('preview'), [], true);
 
+let connectedPlayers = [];
 socket.on('roster', ({ players, count, games }) => {
+  connectedPlayers = players.filter(p => p.connected);
+  if (el('tennisPicker').open) renderTennisChoices();
   el('roster').hidden = false;
   el('count').textContent = count + ' / 4 connected';
   renderPillars(el('players'), players);
@@ -117,6 +119,6 @@ socket.on('roster', ({ players, count, games }) => {
     const button = el(buttons[index]);
     button.hidden = !host;
     button.disabled = !game.eligible || !game.implemented;
-    button.dataset.rule = game.name === 'Table Tennis' ? 'Exactly 2 players' : '2–4 players';
+    button.dataset.rule = game.name === 'Table Tennis' ? 'Choose 2 players' : '2–4 players';
   });
 });
