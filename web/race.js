@@ -31,7 +31,7 @@ function renderTennisChoices() {
     input.type = 'checkbox';
     input.value = p.slot;
     input.checked = selected.includes(p.slot);
-    label.append(input, ' ' + badges[p.slot] + ' ' + p.name);
+    label.append(input, ' ' + p.name);
     return label;
   }));
   updatePair();
@@ -148,30 +148,69 @@ function drawFigure(context, slot, x, feet, size) {
     x - size / 2, feet - size, size, size);
 }
 
+function boostFill(car) {
+  if (car.power) return 1;
+  const remaining = Math.max(0, 1 - (state.tick - (car.chargeTick ?? -60)) / 16);
+  return Math.max(0, car.charge - remaining) / BumperSim.boostCapacity;
+}
+
 function draw() {
   trampoline ??= paintTrampoline();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(trampoline, 0, 0);
   for (const c of [...state.cars].sort((a,b) => a.y - b.y)) {
-    if (c.out && c.out < 100) continue;
+    if (c.out && c.out <= 45) continue;
     ctx.save();
-    ctx.translate(380 + c.x * 3.35, 236 + c.y * 2.07 + (c.out ? (120 - c.out) * 2 : 0));
+    ctx.translate(380 + c.x * 3.35, 236 + c.y * 2.07);
     ctx.globalAlpha = c.shield && state.tick % 12 < 6 ? 0.55 : 1;
+    if (c.out) {
+      const elapsed = 120 - c.out;
+      ctx.globalAlpha = elapsed < 30 ? 0.6 + 0.4 * Math.cos(elapsed * Math.PI / 5)
+        : (c.out - 45) / 45;
+    }
     ctx.fillStyle = '#29423c';
     ctx.beginPath(); ctx.ellipse(0, 2, 25, 14, 0, 0, Math.PI * 2); ctx.fill();
-    if (c.charge === 3 || c.power) {
-      ctx.beginPath(); ctx.ellipse(0, 1, 29, 16, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ffe7a3'; ctx.lineWidth = 4; ctx.stroke();
+    if (!c.out) {
+      const fill = boostFill(c) * BumperSim.boostCapacity;
+      const segment = 2 * Math.PI / BumperSim.boostCapacity;
+      ctx.lineWidth = 6;
+      for (let i = 0; i < BumperSim.boostCapacity; i++) {
+        const start = -Math.PI / 2 + segment * i + 0.05;
+        const sweep = segment - 0.10;
+        ctx.beginPath(); ctx.ellipse(0, 1, 39, 24, 0, start, start + sweep);
+        ctx.strokeStyle = '#243b32'; ctx.stroke();
+        if (fill <= i) continue;
+        ctx.beginPath(); ctx.ellipse(0, 1, 39, 24, 0, start, start + sweep * Math.min(1, fill - i));
+        ctx.strokeStyle = fill >= BumperSim.boostCapacity ? '#bc267f' : '#ffe7a3'; ctx.stroke();
+      }
     }
     if (bumperCars.complete && bumperCars.naturalWidth) {
       // Columns start at east and turn clockwise in screen coordinates.
       const direction = (Math.round(Math.atan2(c.dy, c.dx) / (Math.PI / 4)) + 8) % 8;
       rememberSprite(c.slot, bumperCars, direction, 128, 380 + c.x * 3.35,
-        219 + c.y * 2.07 + (c.out ? (120 - c.out) * 2 : 0), 64);
+        219 + c.y * 2.07, 64);
       ctx.drawImage(bumperCars, direction * 128, c.slot * 128, 128, 128, -32, -49, 64, 64);
     } else {
       drawFigure(ctx, c.slot, 0, 5, 60);
     }
+    ctx.restore();
+  }
+  for (const car of state.cars) {
+    if (!car.out) continue;
+    const elapsed = 120 - car.out;
+    const x = 380 + car.x * 3.35, y = 236 + car.y * 2.07;
+    ctx.save();
+    if (elapsed < 36) {
+      ctx.globalAlpha = 1 - elapsed / 36;
+      ctx.strokeStyle = '#ffb191'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.ellipse(x, y, 24 + elapsed, 14 + elapsed * 0.6, 0, 0, 2 * Math.PI); ctx.stroke();
+    }
+    ctx.globalAlpha = Math.min(1, car.out / 15);
+    const labelY = y < 72 ? y + 35 : y - 65;
+    ctx.fillStyle = '#743b32';
+    ctx.beginPath(); ctx.roundRect(x - 24, labelY, 48, 23, 7); ctx.fill();
+    ctx.font = 'bold 15px system-ui'; ctx.textAlign = 'center';
+    ctx.fillStyle = '#fff8eb'; ctx.fillText('OUT', x, labelY + 17);
     ctx.restore();
   }
 }
@@ -257,9 +296,13 @@ function display() {
   }
   el('raceInfo').textContent = !host && !car ? 'Waiting for next round' : '';
   if (own) {
+    const fill = boostFill(own);
+    el('boost').style.setProperty('--boost-angle', fill * 360 + 'deg');
+    el('boost').style.setProperty('--boost-color', fill >= 1 ? '#bc267f' : '#ffe7a3');
+    el('boost').disabled = Boolean(own.out);
     el('boost').classList.toggle('cooling', Boolean(own.cooldown));
-    el('boost').textContent = own.cooldown ? Math.ceil(own.cooldown / 60) + ' s'
-      : own.charge === 3 ? 'Super boost' : 'Boost';
+    el('boost').textContent = own.out ? 'Out' : own.cooldown ? Math.ceil(own.cooldown / 60) + ' s'
+      : own.charge >= BumperSim.boostCapacity ? 'Super boost' : 'Boost';
   }
   el('scores').textContent = '';
   el('notice').textContent = state.notice;

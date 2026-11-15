@@ -1,5 +1,5 @@
 const PogoSim = (() => {
-  const cap = 7, chargeTicks = 114, airTicks = 30, finish = 420;
+  const cap = 7, chargeTicks = 114, airTicks = 30, finish = 350;
   function create(players) {
     return { round: 1, phase: 'charge', age: 0, winners: [],
       riders: players.map(p => ({ ...p, distance: 0, charge: 0, jump: 0, last: -100 })) };
@@ -64,20 +64,83 @@ function pogoFrame(state, rider) {
 }
 
 function drawTrack(ctx, s, colors) {
+  const progress = s.phase === 'air' ? s.age / PogoSim.airTicks : 0;
+  const positions = s.riders.map(r => r.distance + r.jump * progress);
+  const front = Math.max(...positions), rear = Math.min(...positions);
+  // Keep space ahead of the pack and widen only as the outer riders separate.
+  const scale = Math.min(10, 580 / Math.max(1, front - rear));
+  const offset = Math.max(-60, (front + rear) * scale / 2 - 350);
+  const screenX = meters => meters * scale - offset;
   ctx.clearRect(0, 0, 760, 500);
-  s.riders.forEach((r, i) => {
-    const y = 119 + i * 103, left = 38 + i * 12;
-    const progress = s.phase === 'air' ? s.age / PogoSim.airTicks : 0;
-    const x = left + 540 * (r.distance + r.jump * progress) / PogoSim.finish;
-    const height = 48 * 4 * progress * (1 - progress);
-    ctx.fillStyle = '#dce5db';
-    ctx.beginPath(); ctx.roundRect(left - 15, y - 5, 598, 19, 9); ctx.fill();
-    ctx.fillStyle = '#a9bab0';
-    for (let mark = 1; mark < 7; mark++) ctx.fillRect(left + 540 * mark / 7, y + 6, 2, 7);
-    for (let col = 0; col < 2; col++) for (let row = 0; row < 4; row++) {
-      ctx.fillStyle = (col + row) % 2 ? '#f2f2e9' : '#566e63';
-      ctx.fillRect(left + 540 + col * 5, y - 5 + row * 5, 5, 5);
+  ctx.fillStyle = '#aec3c1';
+  ctx.fillRect(0, 0, 760, 65);
+  for (let layer = 1; layer <= 2; layer++) {
+    const spacing = layer === 1 ? 248 : 162;
+    const drift = ((front + rear) * layer * 0.8) % spacing;
+    ctx.fillStyle = layer === 1 ? '#d6dfd6' : '#edd4b5';
+    for (let x = -drift; x < 760 + spacing; x += spacing) {
+      ctx.beginPath();
+      ctx.ellipse(x, 65, spacing * 0.68, 46 / layer, 0, Math.PI, 2 * Math.PI);
+      ctx.fill();
     }
+  }
+  const firstMark = Math.max(0, Math.ceil(offset / scale / 5) * 5);
+  const finishX = screenX(PogoSim.finish);
+  const lastLaneY = 137 + (s.riders.length - 1) * 103;
+  for (let y = 137; y <= lastLaneY; y += 103) {
+    ctx.fillStyle = '#dce5db';
+    ctx.fillRect(0, y - 5, 760, 19);
+    for (let mark = firstMark; mark < PogoSim.finish && screenX(mark) < 760; mark += 5) {
+      const major = mark % 50 === 0;
+      ctx.fillStyle = '#849b90';
+      ctx.fillRect(screenX(mark), y - 3, major ? 3 : 1, major ? 15 : 7);
+    }
+  }
+
+  for (let mark = 0; mark < PogoSim.finish; mark += 50) {
+    const signX = screenX(mark);
+    if (signX < -24 || signX > 784) continue;
+    ctx.fillStyle = '#64776c';
+    ctx.fillRect(signX - 2, 99, 4, 33);
+    ctx.fillStyle = '#39594e';
+    ctx.beginPath(); ctx.roundRect(signX - 23, 82, 46, 20, 4); ctx.fill();
+    ctx.fillStyle = '#fffdf5';
+    ctx.textAlign = 'center'; ctx.font = '600 12px system-ui';
+    ctx.fillText(mark === 0 ? 'Start' : mark + ' m', signX, 96);
+  }
+
+  if (finishX < 770 && finishX > -20) {
+    for (let y = 63, row = 0; y < lastLaneY + 14; y += 8, row++) {
+      for (let col = 0; col < 2; col++) {
+        ctx.fillStyle = (row + col) % 2 ? '#faf9f0' : '#324c43';
+        ctx.fillRect(finishX + col * 8, y, 8, Math.min(8, lastLaneY + 14 - y));
+      }
+    }
+  }
+
+  if (front >= PogoSim.finish - 100 && s.phase !== 'finished') {
+    const flagX = Math.min(722, Math.max(32, finishX + 8));
+    ctx.fillStyle = '#39594e';
+    ctx.beginPath(); ctx.roundRect(flagX - 21, 13, 42, 34, 8); ctx.fill();
+    ctx.beginPath();
+    if (finishX > 752) {
+      ctx.moveTo(flagX + 18, 19); ctx.lineTo(flagX + 34, 30); ctx.lineTo(flagX + 18, 41);
+    } else {
+      ctx.moveTo(flagX - 9, 44); ctx.lineTo(finishX + 8, 61); ctx.lineTo(flagX + 9, 44);
+    }
+    ctx.fill();
+    ctx.fillStyle = '#fffdf5';
+    ctx.fillRect(flagX - 10, 20, 2, 21);
+    for (let row = 0; row < 2; row++) for (let col = 0; col < 3; col++) {
+      ctx.fillStyle = (row + col) % 2 ? '#24382f' : '#fffdf5';
+      ctx.fillRect(flagX - 8 + col * 6, 20 + row * 6, 6, 6);
+    }
+  }
+
+  s.riders.forEach((r, i) => {
+    const y = 137 + i * 103, left = 24;
+    const x = screenX(positions[i]);
+    const height = (19 + r.jump * 1.65) * 4 * progress * (1 - progress);
     ctx.fillStyle = '#96aaa0'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
     if (pogoRiders.complete && pogoRiders.naturalWidth) {
       const frame = pogoFrame(s, r);

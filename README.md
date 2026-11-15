@@ -13,8 +13,8 @@ detects the disconnect. Four occupied slots block further joins.
 
 With two to four phones connected, select **Start Bumper Cars** on the laptop.
 Hold the phone sideways, drag **Steer** with one thumb, and tap **Boost** with
-the other. Knock another car off the platform to score. Three received bumps
-charge a powered boost, shown by a gold outline. The round lasts 60 seconds.
+the other. Knock another car off the platform to score. Five bumps into opponents
+charge a powered boost, shown by a full pink ring. The round lasts 60 seconds.
 Select **Rematch** to play again or **Back to lobby** to change players.
 Keep the host tab visible while playing. The laptop runs the simulation, and a
 host disconnect returns the room to the lobby. Late joiners wait for the next round.
@@ -43,7 +43,7 @@ printed HTTPS address matching the certificate.
 For **Pogo Race**, join with two to four phones. Tap **Enable pump motion** on
 each HTTPS controller and move the phone up and down, or tap **Pump**. Each
 charge window lasts 1.9 seconds. Seven pumps fill the bar and add a distance
-bonus. Riders jump together every 2.4 seconds. On the first landing across 420 m,
+bonus. Riders jump together every 2.4 seconds. On the first landing across 350 m,
 the farthest rider wins and equal distances share the win.
 
 Run `npm test` for the simulation and Socket.IO integration tests. Set `REJOIN_GRACE_MS` or

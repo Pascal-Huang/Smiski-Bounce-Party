@@ -4,7 +4,6 @@
 [hidden], .in-match #gameHeading, .in-match .lobby-grid { display: none !important; }
 body { margin: 0 auto; max-width: 1280px; padding: 0 clamp(16px,5vw,68px) 36px; }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; letter-spacing: -.07em; padding: 22px 0; border-bottom: 1px solid #ccd1c9; }
-.brand i { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 10px; background: #344b44; color: #edd4b5; font-size: 15px; font-style: normal; box-shadow: inset 0 -4px #223a34; }
 h1 { font-size: clamp(38px,5vw,72px); line-height: 1.05; letter-spacing: -.065em; margin: .55em 0; font-weight: 650; }
 h2 { font-size: clamp(19px,2vw,25px); letter-spacing: -.045em; margin: 0; }
 button,input,select { font: inherit; }
@@ -36,7 +35,6 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 .slot-3 .figure { background-position: right bottom; }
 .away .figure { opacity: .5; }
 .pillar strong { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 6px; font-size: .95rem; }
-.pillar b { color: var(--hue); margin-right: 5px; }
 .pillar small { color: #394a42; }
 #invite { width: clamp(204px,22vw,260px); padding: 22px 16px; text-align: center; background: #faf9f1; border-radius: 26px; border: 1px solid #d1cdc7; }
 #qr { display: block; width: 144px; height: 144px; margin: 15px auto 12px; border-radius: 12px; }
@@ -93,8 +91,9 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 #stick { position: relative; width: min(45vw,65dvh,330px); aspect-ratio: 1; background: radial-gradient(circle,#68837a 10%,#506a60 58%,#334c43 69%,#acbbb0 70%,#cdd7cb 76%); }
 #thumb { position: absolute; inset: 26%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 38% 26%,#f5f3e7,#cbd6c7 68%,#9cafa2); box-shadow: 0 7px 8px #253a3355,inset 0 -4px 1px #8fa296; }
 #boost { width: min(38vw,56dvh,265px); aspect-ratio: 1; color: #263e34; font-size: clamp(22px,4vw,44px); background: #edcbab; border: 8px solid #d5b494; box-shadow: inset 0 -8px #d9aa88,0 5px 0 #947e70; }
+#boost { border-color: transparent; background: linear-gradient(var(--boost-face,#edcbab),var(--boost-face,#edcbab)) padding-box, conic-gradient(var(--boost-color,#ffe7a3) var(--boost-angle,0deg),#947e70 0) border-box; }
 #boost:active { transform: translateY(3px); }
-#boost.cooling { background: #ccd4c9; border-color: #b3bfb2; box-shadow: inset 0 -6px #acb9ac; }
+#boost.cooling { --boost-face: #ccd4c9; box-shadow: inset 0 -6px #acb9ac; }
 @media (max-width: 580px) {
   .game-host .arena-layout { grid-template-columns: minmax(0, 1.8fr) minmax(116px,1fr); gap: 5px; }
   #gameHud { padding: 8px; }

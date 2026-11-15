@@ -1,32 +1,42 @@
 # Bounceback handoff
 
-## Resume here
+## Resume here: Pogo Race
 
-Use the existing checkout at `C:\Users\pashu\Hack Club Haven\hackhaven`. The latest work integrated Table Tennis swing sprites into gameplay and served them on a fresh HTTPS lobby. No further feature has been selected. The owner is satisfied with the core mechanics and has been refining presentation and controller feel.
+Continue in the existing checkout at `C:\Users\pashu\Hack Club Haven\hackhaven`. The owner wants to work on **Pogo Race next**. The specific change is still open. Read this file before starting a new task, then consult `AGENTS.md` for repository guidance and `README.md` for setup and controls.
 
-At handoff, HEAD was `828e9c9`. The tennis changes are in the working tree: `server.js`, `web/tennis.js`, `web/court.js`, and the untracked `web/tennis-players.png`. A fresh clone of that commit alone will lack these changes. Read `AGENTS.md` for contributor guidance and `README.md` for setup and control instructions. The planning document is at `C:\Users\pashu\Downloads\Official Bounce back prd.md`.
+At handoff, local `main` was at `f4a0159`. The latest lobby, calibration, tennis timing and results changes are in the working tree. Use `git status --short` and preserve those edits. The original planning document is at `C:\Users\pashu\Downloads\Official Bounce back prd.md`.
 
-## What players see
+## Pogo Race today
 
-- **Lobby.** The laptop hosts a room. Two to four phones join by QR or four-letter code. Each slot keeps its pillar, nickname, shape badge and original toy-like figure through reconnects. Slot colors are green, blue, coral red and purple. Use matte ivory, muted teal, sand and warm gray for scenery, Apple-style system typography, and the strongest colors on the characters.
-- **Bumper Cars.** A trampoline arena with a plain mat and raised legs. Each car has eight directional views with a matching driver. Phones show a left joystick and right Boost button. The host shows a large timer above animated standings. A credited ring-out earns one point.
-- **Table Tennis.** Exactly two players, split rear views, first to seven. Players hold their phones edge-on and calibrate left, right and forward strokes. A forward push aims down the middle. Touch also works. The host renders wind-up, swing and recovery for each slot color, including missed swings.
-- **Pogo Race.** Two to four players pump by motion or touch. Seven pumps earn a burst. The 420 m race uses a 2.4-second jump cycle and six poses per rider. Distance standings update on landing.
+Two to four phones can pump by tapping **Pump** or by enabling motion and moving the phone up and down. All riders charge and jump together. Each cycle has 1.9 seconds to charge and 0.5 seconds in the air. Each jump travels 4 m plus 2 m per accepted pump. Seven pumps fill the meter and add a 5 m burst, for a maximum jump of 23 m. Distances and standings update together on landing. Once a rider reaches 350 m, the greatest landed distance wins; equal leaders share the win.
 
-## Code and assets
+- `web/pogo.js` contains the simulation, motion detector, six rider poses and track renderer. The sprite sheet is `web/pogo-riders.png`.
+- `web/pump.js` handles phone input and motion permission. Inputs carry a round number so a delayed pump cannot charge the next jump.
+- `web/race.js` connects the simulation to the host canvas, standings, countdown and winner card. The track renderer records each rider’s drawn position and pose for the transition into the winner card.
+- Run `node --test test/pogo.test.js` for charge limits, simultaneous landings, ties and motion detection.
 
-`server.js` owns rooms, relays Socket.IO traffic and explicitly lists public asset routes. The laptop runs the simulation. `web/app.js` handles the lobby and `web/race.js` coordinates matches, controls and standings. Bumper physics lives in `web/sim.js`. Tennis uses `web/tennis.js` for rules and swing timing, `web/court.js` for drawing, and `web/motion.js` for calibration. Pogo uses `web/pogo.js` and `web/pump.js`. Sprite sheets are in `web/`. Tennis uses six 160 px square frames per color row; left strokes mirror the lateral poses.
+## Shared game flow
+
+The laptop hosts a room. Two to four phones join by QR or four-letter code. Each player keeps their nickname, shape and slot color (green, blue, coral red or purple) through reconnects. Use matte ivory, dusty teal, sand and warm gray for scenery.
+
+All three games show a large 3–2–1 countdown on the host and phones. At the finish, the winner’s sprite moves into a card while the playfield remains visible through an ivory backdrop. The card pops with confetti, then moves left as final standings enter from the right. Narrow screens stack the card above standings. Ties show all winners. Reduced-motion mode presents the settled result. The host can rematch or return to the lobby.
+
+## Other games
+
+**Table Tennis.** Exactly two players compete, first to seven. With three or four phones connected, the host chooses the pair. The host presses **Start calibration** once for both paddles. Players hold phones edge-on and follow arrows through two rounds of left, right and forward strokes. A missed verification retries that direction. Each player gets a green check on completion; both must finish before the countdown. A phone may need a local tap to grant browser motion permission. Tennis uses motion only.
+
+The host shows two brown tables with a divider. Timing feedback uses words: Very early / Very late in red, Early / Late in amber, Perfect in gold. Three Perfects fill a player’s three-segment meter. It stays charged across points and non-Perfect returns. The next Perfect fires a pink **Supersmash** and empties the meter. Tennis rules live in `web/tennis.js`, rendering in `web/court.js`, and calibration in `web/motion.js`.
+
+**Bumper Cars.** Phones have a joystick and Boost button. Directional cars battle on a trampoline; a credited ring-out earns one point. The host shows a timer and live standings. Physics lives in `web/sim.js`.
 
 ## Run and verify
 
-Run `npm ci`, `npm start` and `npm test` from the checkout with Node 22+. The default port is 3000. The latest demo ran on **3003**. Its [temporary HTTPS lobby](https://speaks-changes-led-approximate.trycloudflare.com) served the updated renderer and tennis PNG at the last check. Verify the link before sharing it again.
-
-For a replacement tunnel to a running server on port 3003, use PowerShell:
+From the checkout, use Node 22+, `npm ci`, `npm start` and `npm test`. The default port is 3000. The last public demo used **3003** and this [temporary HTTPS lobby](https://speaks-changes-led-approximate.trycloudflare.com). Check the link before sharing it again. For a replacement tunnel to a running server on 3003:
 
 ```powershell
 & 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3003
 ```
 
-If the page opens but sprites are missing, check `/tennis-players.png` on that exact origin. An older server returned 404 while serving the latest JavaScript. New asset routes require a current server process. Restarting a server clears its in-memory rooms.
+`server.js` owns rooms, relays Socket.IO events and explicitly lists public asset routes. Browser files are read from disk, but server-side changes require restarting the process behind the demo tunnel. Restarting expires existing rooms. Refresh host and phones after client changes. Use trusted HTTPS to test physical motion.
 
-All 13 automated tests passed after the tennis change. A separate check exercised all 12 color-and-stroke combinations through recovery. The remaining hands-on check is a two-phone match confirming that each player's physical left, right and forward strokes read clearly from their own side of the shared screen.
+At the last feature check, all 15 automated tests passed. The public demo was tested with four simulated phones: selecting slots 2 and 4 sent only those players into tennis calibration. Physical two-phone testing of swing consistency, timing feel and the results transition is still pending.

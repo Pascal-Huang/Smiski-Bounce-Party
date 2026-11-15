@@ -75,9 +75,8 @@ socket.on('disconnect', () => {
   el('roster').hidden = true;
   status('Reconnecting…', true);
 });
-const badges = ['●', '◆', '▲', '✦'];
 function renderPillars(stage, players, preview = false) {
-  stage.replaceChildren(...badges.map((badge, slot) => {
+  stage.replaceChildren(...Array.from({ length: 4 }, (_, slot) => {
     const player = players.find(p => p.slot === slot);
     const pillar = document.createElement(preview ? 'div' : 'li');
     pillar.className = 'pillar slot-' + slot;
@@ -92,10 +91,7 @@ function renderPillars(stage, players, preview = false) {
     }
     if (!preview) {
       const name = document.createElement('strong');
-      const symbol = document.createElement('b');
-      symbol.textContent = badge;
-      symbol.setAttribute('aria-hidden', 'true');
-      name.append(symbol, player?.name || 'Open spot');
+      name.textContent = player?.name || 'Open spot';
       const state = document.createElement('small');
       state.textContent = !player ? 'Pillar ' + (slot + 1) : !player.connected
         ? 'Reconnecting' : slot === mySlot ? 'You' : 'Connected';

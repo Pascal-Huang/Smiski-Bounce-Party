@@ -1,10 +1,11 @@
 // Fixed 60 Hz, circular arena of radius 100 in ground-plane units.
 const BumperSim = (() => {
+  const boostCapacity = 5;
   function spawn(car) {
     const angle = car.slot * Math.PI / 2;
     Object.assign(car, { x: 50 * Math.cos(angle), y: 50 * Math.sin(angle),
       vx: 0, vy: 0, dx: -Math.cos(angle), dy: -Math.sin(angle),
-      dash: 0, power: false, lastHit: null, hitTick: -200 });
+      contacts: {}, dash: 0, power: false, lastHit: null, hitTick: -200 });
   }
   function create(players) {
     return { tick: 0, notice: '', cars: players.map(({ slot, name }) => {
@@ -27,8 +28,10 @@ const BumperSim = (() => {
       if (length) { c.dx = x / length; c.dy = y / length; }
       c.cooldown = Math.max(0, c.cooldown - 1);
       if (input.boost && !c.cooldown) {
-        c.vx = c.dx * 3.4; c.vy = c.dy * 3.4;
-        c.dash = 17; c.cooldown = 180; c.power = c.charge >= 3;
+        c.power = c.charge >= boostCapacity;
+        const launchSpeed = c.power ? 3.4 : 2.4;
+        c.vx = c.dx * launchSpeed; c.vy = c.dy * launchSpeed;
+        c.dash = 17; c.cooldown = 180;
         if (c.power) c.charge = 0;
       }
       if (c.dash) c.dash--;
@@ -50,6 +53,15 @@ const BumperSim = (() => {
       a.x -= nx * overlap; a.y -= ny * overlap;
       b.x += nx * overlap; b.y += ny * overlap;
       const speed = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+      for (const [driver, other, direction] of [[a, b, 1], [b, a, -1]]) {
+        const approach = (driver.vx * nx + driver.vy * ny) * direction;
+        if (speed > 0 && approach > 0.25 && driver.charge < boostCapacity &&
+            state.tick - (driver.contacts[other.slot] ?? -100) > 15) {
+          driver.charge++;
+          driver.chargeTick = state.tick;
+        }
+        driver.contacts[other.slot] = state.tick;
+      }
       if (speed <= 0) {
         // Resolving overlap can push a car over the rim even as the cars separate.
         a.lastHit = b.slot; b.lastHit = a.slot;
@@ -61,17 +73,17 @@ const BumperSim = (() => {
       const kickB = impulse * (a.power ? 2 : 1);
       a.vx -= nx * kickA; a.vy -= ny * kickA;
       b.vx += nx * kickB; b.vy += ny * kickB;
-      for (const [target, source, direction] of [[a, b, -1], [b, a, 1]]) {
-        const incoming = (source.vx * nx + source.vy * ny) * direction + (source === a ? kickA : kickB);
-        if (incoming > 0.25 && (target.lastHit !== source.slot || state.tick - target.hitTick > 15)) {
-          target.charge = Math.min(3, target.charge + 1);
-        }
-        target.lastHit = source.slot; target.hitTick = state.tick;
-      }
+      a.lastHit = b.slot; b.lastHit = a.slot;
+      a.hitTick = b.hitTick = state.tick;
       a.power = b.power = false;
     }
     for (const car of state.cars) {
       if (car.out || Math.hypot(car.x, car.y) <= 100) continue;
+      const radius = Math.hypot(car.x, car.y);
+      car.x *= 100 / radius; car.y *= 100 / radius;
+      car.vx = car.vy = car.dash = 0;
+      car.power = false;
+      car.charge = 0;
       car.out = 120;
       const scorer = state.cars.find(c => c.slot === car.lastHit);
       if (scorer && state.tick - car.hitTick <= 120) {
@@ -80,6 +92,6 @@ const BumperSim = (() => {
       } else state.notice = car.name + ' drove off the edge';
     }
   }
-  return { create, step };
+  return { create, step, boostCapacity };
 })();
 if (typeof module !== 'undefined') module.exports = BumperSim;

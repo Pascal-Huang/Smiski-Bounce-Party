@@ -6,7 +6,7 @@ const players = [{ slot: 0, name: 'Alex' }, { slot: 1, name: 'Lee' }];
 test('boost spends charge on press and respects its cooldown', () => {
   const state = create(players);
   const car = state.cars[0];
-  car.charge = 3;
+  car.charge = 5;
   const controls = { 0: { boost: true, x: 0, y: 1 } };
   step(state, controls);
   assert.equal(car.power, true);
@@ -17,7 +17,7 @@ test('boost spends charge on press and respects its cooldown', () => {
   assert.equal(car.cooldown, 179);
 });
 
-test('a powered collision doubles knockback and awards a ring-out once', () => {
+test('a powered dash hits harder and the knocked-out car respawns without charge', () => {
   function hit(charge) {
     const state = create(players);
     Object.assign(state.cars[0], { x: 82, y: 0, charge });
@@ -25,13 +25,27 @@ test('a powered collision doubles knockback and awards a ring-out once', () => {
     step(state, { 0: { x: 1, boost: true } });
     return state;
   }
-  const state = hit(3);
-  assert.equal(state.cars[1].vx, hit(0).cars[1].vx * 2);
+  const state = hit(5);
+  assert.equal(hit(4).cars[1].vx, hit(0).cars[1].vx);
+  assert.equal(hit(4).cars[0].charge, 5);
+  assert.equal(hit(0).cars[0].charge, 1);
+  assert.equal(hit(0).cars[1].charge, 0);
+  assert.ok(state.cars[1].vx > hit(0).cars[1].vx * 2);
+  state.cars[1].charge = 5;
   step(state, {});
   assert.equal(state.cars[0].score, 1);
   assert.equal(state.cars[1].out, 120);
-  for (let i = 0; i < 120; i++) step(state, {});
+  const victim = state.cars[1];
+  assert.equal(victim.charge, 0);
+  const edge = [victim.x, victim.y];
+  assert.ok(Math.abs(Math.hypot(...edge) - 100) < 1e-8);
+  for (let i = 0; i < 119; i++) {
+    step(state, { 1: { x: -1, boost: true } });
+    assert.deepEqual([victim.x, victim.y], edge);
+  }
+  step(state, {});
   assert.equal(state.cars[1].shield, 90);
+  assert.equal(victim.charge, 0);
   assert.equal(state.cars[0].score, 1);
 });
 
