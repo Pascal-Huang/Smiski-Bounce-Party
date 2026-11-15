@@ -28,6 +28,10 @@ const TennisSim = (() => {
     for (const p of s.players) {
       const lane = inputs[p.slot]?.lane;
       if ([-1, 0, 1].includes(lane)) p.lane = lane;
+      if (inputs[p.slot]?.swing) {
+        p.swingTick = s.tick;
+        p.swingLane = inputs[p.slot].shotLane ?? p.lane;
+      }
     }
     if (s.pause) { s.pause--; return; }
     s.flight++;

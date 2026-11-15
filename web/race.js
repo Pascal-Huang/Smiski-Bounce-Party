@@ -132,6 +132,8 @@ function draw() {
     if (bumperCars.complete && bumperCars.naturalWidth) {
       // Columns start at east and turn clockwise in screen coordinates.
       const direction = (Math.round(Math.atan2(c.dy, c.dx) / (Math.PI / 4)) + 8) % 8;
+      rememberSprite(c.slot, bumperCars, direction, 128, 380 + c.x * 3.35,
+        219 + c.y * 2.07 + (c.out ? (120 - c.out) * 2 : 0), 64);
       ctx.drawImage(bumperCars, direction * 128, c.slot * 128, 128, 128, -32, -49, 64, 64);
     } else {
       drawFigure(ctx, c.slot, 0, 5, 60);
@@ -147,6 +149,16 @@ function updateStandings(players, metric = 'score', unit = '') {
   standingsKey = key;
   const board = el('standings');
   const tops = new Map(Array.from(board.children, row => [row.className, row.getBoundingClientRect().top]));
+  renderStandings(board, sorted, metric, unit);
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    for (const row of board.children) {
+      const delta = tops.get(row.className) - row.getBoundingClientRect().top;
+      if (delta) row.animate([{ transform: 'translateY(' + delta + 'px)' }, { transform: 'none' }], { duration: 240, easing: 'ease-out' });
+    }
+  }
+}
+
+function renderStandings(board, sorted, metric, unit) {
   board.replaceChildren(...sorted.map(car => {
     const row = document.createElement('li');
     row.className = 'slot-' + car.slot;
@@ -162,12 +174,6 @@ function updateStandings(players, metric = 'score', unit = '') {
     row.append(rank, icon, name, points);
     return row;
   }));
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    for (const row of board.children) {
-      const delta = tops.get(row.className) - row.getBoundingClientRect().top;
-      if (delta) row.animate([{ transform: 'translateY(' + delta + 'px)' }, { transform: 'none' }], { duration: 240, easing: 'ease-out' });
-    }
-  }
 }
 
 function display() {
@@ -243,7 +249,75 @@ function run() {
   }
   animation = requestAnimationFrame(frame);
 }
+const winnerSprites = new Map();
+function rememberSprite(slot, sheet, frame, cell, x, y, size, flipped = false) {
+  winnerSprites.set(slot, { sheet, frame, cell, x, y, size, flipped });
+}
+function showVictory() {
+  const players = tennis() ? state.players : pogo() ? state.riders : state.cars;
+  const best = pogo() ? 0 : Math.max(...players.map(p => p.score));
+  const winners = tennis() ? [players[state.winner]] : players.filter(p =>
+    pogo() ? state.winners.includes(p.slot) : p.score === best);
+  el('victoryTitle').textContent = winners.map(p => p.name).join(' & ') +
+    (winners.length === 1 ? ' wins!' : ' share the win!');
+  el('victoryScore').textContent = tennis() ? winners[0].score + '–' + players[1 - state.winner].score
+    : pogo() ? winners[0].distance + ' m' : best + (best === 1 ? ' ring-out' : ' ring-outs');
+  el('victoryActions').hidden = !host;
+  const metric = pogo() ? 'distance' : 'score';
+  const sorted = [...players].sort((a,b) => b[metric] - a[metric] || a.slot - b.slot);
+  renderStandings(el('finalStandings'), sorted, metric, pogo() ? ' m' : '');
+  const portraits = el('victoryPortraits');
+  portraits.replaceChildren();
+  el('victory').showModal();
+  const field = canvas.getBoundingClientRect();
+  for (const p of winners) {
+    const badge = document.createElement('div');
+    badge.style.backgroundColor = playerColors[p.slot];
+    const portrait = document.createElement('canvas');
+    portrait.width = portrait.height = 192;
+    const g = portrait.getContext('2d');
+    const sprite = host && winnerSprites.get(p.slot);
+    if (sprite) {
+      if (sprite.flipped) { g.translate(192, 0); g.scale(-1, 1); }
+      g.drawImage(sprite.sheet, sprite.frame * sprite.cell, p.slot * sprite.cell, sprite.cell, sprite.cell, 0, 0, 192, 192);
+    } else drawFigure(g, p.slot, 96, 192, 192);
+    badge.append(portrait);
+    portraits.append(badge);
+  }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const confetti = el('victoryConfetti');
+  confetti.replaceChildren();
+  for (let i = 0; i < 28; i++) {
+    const piece = document.createElement('i');
+    const angle = Math.PI * 2 * i / 28;
+    const radius = 85 + Math.random() * 55;
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    piece.style.backgroundColor = playerColors[i % playerColors.length];
+    confetti.append(piece);
+    piece.animate([
+      { transform: 'scale(0)', opacity: 0 },
+      { transform: `translate(${x * .7}px,${y * .7}px) rotate(80deg)`, opacity: 1, offset: .3 },
+      { transform: `translate(${x}px,${y + 36}px) rotate(220deg)`, opacity: 0 }
+    ], { delay: 1100, duration: 630, fill: 'both' });
+  }
+  winners.forEach((p, i) => {
+    const sprite = host && winnerSprites.get(p.slot);
+    if (!sprite) return;
+    const portrait = portraits.children[i].firstChild;
+    const rect = portrait.getBoundingClientRect();
+    const dx = field.left + sprite.x * field.width / canvas.width - rect.left - rect.width / 2;
+    const dy = field.top + sprite.y * field.height / canvas.height - rect.top - rect.height / 2;
+    const scale = sprite.size * field.width / canvas.width / rect.width;
+    portrait.animate([{ transform: `translate(${dx}px,${dy}px) scale(${scale})` }, { transform: 'none' }],
+      { delay: 200, duration: 900, easing: 'cubic-bezier(.22,.75,.25,1)', fill: 'backwards' });
+  });
+}
+el('victoryRematch').onclick = () => start(match.game);
+el('victoryLobby').onclick = () => socket.emit('lobby');
 function show(next) {
+  if (next?.id !== match?.id) winnerSprites.clear();
+  if (next?.phase !== 'results' && el('victory').open) el('victory').close();
   cancelAnimationFrame(animation);
   match = next;
   document.body.classList.toggle('in-match', Boolean(match));
@@ -280,6 +354,7 @@ function show(next) {
   state = match.result || simulation().create(match.players);
   display();
   if (playing && ownsSim()) run();
+  if (match.phase === 'results' && !el('victory').open) showVictory();
   if (!playing && !host) {
     if (pogo()) {
       const names = state.riders.filter(r => state.winners.includes(r.slot)).map(r => r.name);

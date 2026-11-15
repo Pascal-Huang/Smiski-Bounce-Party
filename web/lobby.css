@@ -66,12 +66,12 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 .clock-card { border-bottom: 1px solid #d1cdc7; padding-bottom: 12px; }
 .clock-card span { font-size: .92rem; }
 #roundClock { display: block; font-size: clamp(40px,5vw,78px); line-height: 1.1; letter-spacing: -.06em; font-variant-numeric: tabular-nums; }
-#standings { padding: 0; margin: 0; list-style: none; }
-#standings li { display: grid; grid-template-columns: auto clamp(28px,3vw,48px) 1fr auto; align-items: center; gap: 5px; padding: 8px 0; border-top: 1px solid #deded3; }
-#standings .figure { position: static; width: 100%; display: block; }
-#standings .name { overflow-wrap: anywhere; font-weight: 600; }
-#standings strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
-#standings small { color: #51645a; }
+:is(#standings, #finalStandings) { padding: 0; margin: 0; list-style: none; }
+:is(#standings, #finalStandings) li { display: grid; grid-template-columns: auto clamp(28px,3vw,48px) 1fr auto; align-items: center; gap: 5px; padding: 8px 0; border-top: 1px solid #deded3; }
+:is(#standings, #finalStandings) .figure { position: static; width: 100%; display: block; }
+:is(#standings, #finalStandings) .name { overflow-wrap: anywhere; font-weight: 600; }
+:is(#standings, #finalStandings) strong { font-size: 1.45rem; font-variant-numeric: tabular-nums; }
+:is(#standings, #finalStandings) small { color: #51645a; }
 .bumper-pad { overflow: hidden; overscroll-behavior: none; }
 .bumper-pad > header, .bumper-pad main > :not(#room), .bumper-pad #room > :not(#race), .bumper-pad #race > :not(#controls) { display: none !important; }
 .bumper-pad #controls { position: fixed; inset: 0; display: flex; justify-content: space-between; padding-left: max(12px,env(safe-area-inset-left)); padding-right: max(12px,env(safe-area-inset-right)); align-items: center; background: #e3e8dd; touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -84,7 +84,7 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 @media (max-width: 580px) {
   .game-host .arena-layout { grid-template-columns: minmax(0, 1.8fr) minmax(116px,1fr); gap: 5px; }
   #gameHud { padding: 8px; }
-  #standings li { grid-template-columns: auto 24px 1fr auto; font-size: .76rem; gap: 2px; }
+  :is(#standings, #finalStandings) li { grid-template-columns: auto 24px 1fr auto; font-size: .76rem; gap: 2px; }
 }
 
 .motion-pad { padding: 0 max(16px,env(safe-area-inset-right)) 20px max(16px,env(safe-area-inset-left)); }
@@ -98,3 +98,42 @@ input { background: #fffdf6; border: 1px solid #969f95; border-radius: 12px; pad
 .motion-pad #lane { border: 1px solid #99aaa0; border-radius: 14px; background: #faf9f1; padding: 14px; }
 .motion-pad #pump, .motion-pad #swing { background: #edd4b5; color: #283b37; min-width: min(45vw,240px); min-height: clamp(88px,28dvh,160px); border-radius: 36px; box-shadow: inset 0 -5px #d3b99a; font-size: 28px; touch-action: manipulation; }
 .motion-pad #pump:active, .motion-pad #swing:active { transform: translateY(2px); }
+
+#victory { overflow: visible; padding: 0; border: 0; background: transparent; color: #263c33; width: min(92vw, 900px); text-align: center; }
+#victory::backdrop { background: rgb(242 242 233 / 68%); }
+.victory-body { position: relative; padding: clamp(20px,4vw,42px); }
+.victory-body::before { content: ''; position: absolute; inset: 0; z-index: -1; background: #fffef6; border: 1px solid #d1cdc7; border-radius: 28px; box-shadow: 0 12px 42px #324b3812; }
+#victoryPortraits { display: flex; justify-content: center; gap: 6px; }
+#victoryPortraits div { width: 146px; min-width: 0; aspect-ratio: 1; border-radius: 50%; }
+#victoryPortraits canvas { width: 100%; display: block; background: transparent; }
+#victoryTitle { margin: 18px 0 4px; font-size: clamp(28px,5vw,48px); line-height: 1.05; overflow-wrap: anywhere; }
+#victoryScore { margin: 8px 0 16px; }
+@keyframes victoryFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes badgeReveal { from { background-color: transparent; } }
+@media (prefers-reduced-motion: no-preference) {
+  #victory[open]::backdrop, #victory[open] .victory-body::before { animation: victoryFade 900ms 200ms backwards; }
+  #victoryPortraits div { animation: badgeReveal 760ms 280ms backwards; }
+  #victoryTitle, #victoryScore, #victoryActions { animation: victoryFade 320ms 750ms backwards; }
+}
+#victory[open] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: center; }
+.victory-body { isolation: isolate; --entry-x: calc(-50% - 10px); --entry-y: 0px; }
+.victory-board { padding: clamp(16px,3vw,30px); border: 1px solid #d1cdc7; border-radius: 28px; background: #fffef6; text-align: left; }
+.victory-board h2 { margin: 0 0 12px; }
+#victoryConfetti { position: absolute; left: 50%; top: 33%; z-index: 2; pointer-events: none; }
+#victoryConfetti i { position: absolute; width: 7px; height: 11px; border-radius: 2px; opacity: 0; }
+@keyframes victoryDock {
+  0%, 49%, 70% { transform: translate(var(--entry-x), var(--entry-y)); }
+  55% { transform: translate(var(--entry-x), var(--entry-y)) scale(1.055); }
+  61% { transform: translate(var(--entry-x), var(--entry-y)) scale(.985); }
+  100% { transform: none; }
+}
+@keyframes standingsEnter { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+@media (max-width: 620px) {
+  #victory[open] { grid-template-columns: 1fr; gap: 10px; max-height: 92dvh; overflow: auto; }
+  .victory-body { grid-row: 1; --entry-x: 0px; --entry-y: min(12vh,76px); }
+  #victoryPortraits div { width: 96px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  #victory[open] .victory-body { animation: victoryDock 2200ms ease-in-out both; }
+  #victory[open] .victory-board { animation: standingsEnter 540ms 1580ms backwards; }
+}

@@ -40,7 +40,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       } catch { res.writeHead(400).end(); }
       return;
     }
-    if (['/lobby.css', '/figures.png', '/bumper-cars.png', '/pogo-riders.png'].includes(url.pathname)) {
+    if (['/lobby.css', '/figures.png', '/bumper-cars.png', '/pogo-riders.png', '/tennis-players.png'].includes(url.pathname)) {
       const file = join(__dirname, 'web', url.pathname.slice(1));
       require('node:fs').readFile(file, (error, data) => {
         if (error) return res.writeHead(404).end();

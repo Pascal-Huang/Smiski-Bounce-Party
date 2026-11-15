@@ -1,3 +1,25 @@
+const tennisFigures = new Image();
+tennisFigures.src = '/tennis-players.png';
+
+function drawTennisPlayer(ctx, player, tick, x, feet) {
+  if (!tennisFigures.complete || !tennisFigures.naturalWidth) {
+    drawFigure(ctx, player.slot, x, feet, 64);
+    return;
+  }
+  const age = tick - (player.swingTick ?? -100);
+  const forward = player.swingLane === 0;
+  let frame = 0;
+  if (age < 4) frame = forward ? 3 : 1;
+  else if (age < 13) frame = forward ? 4 : 2;
+  else if (age < 21) frame = 5;
+  ctx.save();
+  rememberSprite(player.slot, tennisFigures, frame, 160, x, feet - 38, 90, player.swingLane === -1 && frame !== 0);
+  ctx.translate(x, feet);
+  if (player.swingLane === -1 && frame !== 0) ctx.scale(-1, 1);
+  ctx.drawImage(tennisFigures, frame * 160, player.slot * 160, 160, 160, -45, -83, 90, 90);
+  ctx.restore();
+}
+
 function drawCourt(ctx, state) {
   ctx.clearRect(0, 0, 760, 500);
   const travel = Math.min(1.12, state.flight / state.duration);
@@ -38,10 +60,7 @@ function drawCourt(ctx, state) {
     const inZone = target && travel >= 0.8 && travel <= 1.12 && !state.attempted && state.winner === null;
     line(project(-1,side),project(1,side),inZone ? '#f0a500' : '#d4eae8',6);
     const [px, py] = project(target ? state.to : state.from, side);
-    drawFigure(ctx, player.slot, px - 16, py + 24, 60);
-    line([px + 3, py + 4], [px + 16, py - 9], '#52645a', 5);
-    ctx.fillStyle = playerColors[player.slot];
-    ctx.beginPath(); ctx.ellipse(px + 18, py - 10, 13, 8, -.4, 0, Math.PI * 2); ctx.fill();
+    drawTennisPlayer(ctx, player, state.winner === null ? state.tick : Infinity, px, py + 24);
     const [bx, by] = project(lateral, depth);
     const height = 8 + 40 * Math.abs(Math.sin(Math.PI * (travel + 0.25)));
     ctx.fillStyle = '#193d44'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();

@@ -81,6 +81,7 @@ function drawTrack(ctx, s, colors) {
     ctx.fillStyle = '#96aaa0'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
     if (pogoRiders.complete && pogoRiders.naturalWidth) {
       const frame = pogoFrame(s, r);
+      rememberSprite(r.slot, pogoRiders, frame, 128, x, y - height - 33, 72);
       ctx.drawImage(pogoRiders, frame * 128, r.slot * 128, 128, 128,
         x - 36, y - height - 69, 72, 72);
     } else {
