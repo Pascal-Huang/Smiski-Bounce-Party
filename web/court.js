@@ -14,29 +14,41 @@ function drawCourt(ctx, state) {
       ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b);
       ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
     }
-    ctx.fillStyle = '#166a68';
+    for (const edge of [-0.88, 0.88]) {
+      const foot = project(edge, side);
+      line(foot, [foot[0], foot[1] + 26], '#84998f', 7);
+    }
+    ctx.fillStyle = '#63867b';
     ctx.beginPath();
     for (const [i, point] of [[-1,0],[1,0],[1,1],[-1,1]].entries()) {
       if (i === 0) ctx.moveTo(...project(...point)); else ctx.lineTo(...project(...point));
     }
     ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#e2e8d9'; ctx.lineWidth = 3; ctx.stroke();
     line(project(0,0), project(0,1), '#c0ded5', 2);
     const [aimX, aimY] = project(direction * player.lane * 0.77, 1 - side);
     line([aimX - 9, aimY], [aimX + 9, aimY], '#ffce55', 5);
     const net = [-1,1].map(x => project(x,0.5));
-    line(net[0],net[1],'#244551',12);
+    const netY = net[0][1];
+    for (let x = Math.min(net[0][0], net[1][0]); x < Math.max(net[0][0], net[1][0]); x += 6)
+      line([x, netY - 13], [x, netY], '#425d54', 1);
+    line(net[0],net[1],'#425d54',2);
+    line([net[0][0], netY - 13], [net[1][0], netY - 13], '#f2f2e9', 3);
     const target = 1 - state.hitter === side;
-    const inZone = target && travel >= 0.8 && travel <= 1.12 && !state.attempted;
+    const inZone = target && travel >= 0.8 && travel <= 1.12 && !state.attempted && state.winner === null;
     line(project(-1,side),project(1,side),inZone ? '#f0a500' : '#d4eae8',6);
     const [px, py] = project(target ? state.to : state.from, side);
-    line([px - 17,py - 6],[px + 17,py - 6],'#ac3554',10);
+    drawFigure(ctx, player.slot, px - 16, py + 24, 60);
+    line([px + 3, py + 4], [px + 16, py - 9], '#52645a', 5);
+    ctx.fillStyle = playerColors[player.slot];
+    ctx.beginPath(); ctx.ellipse(px + 18, py - 10, 13, 8, -.4, 0, Math.PI * 2); ctx.fill();
     const [bx, by] = project(lateral, depth);
     const height = 8 + 40 * Math.abs(Math.sin(Math.PI * (travel + 0.25)));
     ctx.fillStyle = '#193d44'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();
     ctx.fillStyle = '#ffbb3c'; ctx.beginPath(); ctx.arc(bx,by-height,8,0,Math.PI*2); ctx.fill();
     ctx.fillStyle = '#182f3a'; ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif';
     const center = 190 + side * 380;
-    ctx.fillText(player.name + ' · ' + player.score, center, 95, 350);
+    ctx.fillText(player.name, center, 95, 350);
     ctx.font = '16px sans-serif';
     ctx.fillText('Aim ' + ['left','centre','right'][player.lane + 1] + (player.smash ? ' · Smash ready' : ''),center,125);
     ctx.fillText(inZone ? 'Swing now' : '',center,445);

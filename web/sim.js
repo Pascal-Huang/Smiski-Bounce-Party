@@ -50,7 +50,12 @@ const BumperSim = (() => {
       a.x -= nx * overlap; a.y -= ny * overlap;
       b.x += nx * overlap; b.y += ny * overlap;
       const speed = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
-      if (speed <= 0) continue;
+      if (speed <= 0) {
+        // Resolving overlap can push a car over the rim even as the cars separate.
+        a.lastHit = b.slot; b.lastHit = a.slot;
+        a.hitTick = b.hitTick = state.tick;
+        continue;
+      }
       const impulse = speed * 0.9;
       const kickA = impulse * (b.power ? 2 : 1);
       const kickB = impulse * (a.power ? 2 : 1);

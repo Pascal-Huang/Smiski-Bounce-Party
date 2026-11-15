@@ -85,6 +85,6 @@ test('a room syncs, reserves and releases four phone slots', { timeout: 10000 },
   extra.disconnect();
   await update;
   const [expired] = await once(host, 'roster');
-  assert.equal(expired.players.length, 3);
+  assert.deepEqual(expired.players.map(p => p.slot), [1, 2, 3]);
   assert.equal((await joinPhone()).player.name, 'Player 1');
 });

@@ -7,6 +7,7 @@ const key = 'bounceback/' + route + '/' + code;
 const socket = io();
 let entering = false;
 let playerId;
+let mySlot;
 
 function status(message, retry = false) {
   el('status').textContent = message;
@@ -15,7 +16,8 @@ function status(message, retry = false) {
 
 el('home').hidden = Boolean(code);
 el('room').hidden = !code;
-el('heading').textContent = 'Room ' + code;
+el('heading').textContent = host ? 'Party lobby' : 'Room ' + code;
+el('inviteCode').textContent = code || '';
 el('join').hidden = !code || host;
 el('manual').onsubmit = event => {
   event.preventDefault();
@@ -43,13 +45,14 @@ async function enter() {
     });
     if (result.error) { status(result.error, true); return; }
     playerId = result.id;
+    mySlot = result.slot;
     if (host) {
       const url = new URL('/c/' + code, location.origin);
       if (['localhost', '127.0.0.1'].includes(url.hostname) && result.addresses.length) {
         url.hostname = result.addresses[0];
       }
       el('qr').src = '/qr?url=' + encodeURIComponent(url.href);
-      el('address').textContent = 'Scan to join, or open ' + url.origin + ' and enter ' + code;
+      el('address').textContent = 'Scan with your phone, or enter the code at ' + url.host;
       el('invite').hidden = false;
       status('');
     } else {
@@ -73,26 +76,47 @@ socket.on('disconnect', () => {
   el('roster').hidden = true;
   status('Reconnecting…', true);
 });
-function list(id, items) {
-  el(id).replaceChildren(...items.map(text => {
-    const li = document.createElement('li');
-    li.textContent = text;
-    return li;
+const badges = ['●', '◆', '▲', '✦'];
+function renderPillars(stage, players, preview = false) {
+  stage.replaceChildren(...badges.map((badge, slot) => {
+    const player = players.find(p => p.slot === slot);
+    const pillar = document.createElement(preview ? 'div' : 'li');
+    pillar.className = 'pillar slot-' + slot;
+    const base = document.createElement('div');
+    base.className = 'plinth';
+    pillar.append(base);
+    if (player || preview) {
+      const sprite = document.createElement('span');
+      sprite.className = 'figure';
+      base.append(sprite);
+      if (player && !player.connected) pillar.classList.add('away');
+    }
+    if (!preview) {
+      const name = document.createElement('strong');
+      const symbol = document.createElement('b');
+      symbol.textContent = badge;
+      symbol.setAttribute('aria-hidden', 'true');
+      name.append(symbol, player?.name || 'Open spot');
+      const state = document.createElement('small');
+      state.textContent = !player ? 'Pillar ' + (slot + 1) : !player.connected
+        ? 'Reconnecting' : slot === mySlot ? 'You' : 'Connected';
+      pillar.append(name, state);
+    }
+    return pillar;
   }));
 }
+if (!code) renderPillars(el('preview'), [], true);
+
 socket.on('roster', ({ players, count, games }) => {
   el('roster').hidden = false;
-  el('count').textContent = count + ' of 4 connected';
-  el('start').hidden = !host;
-  el('start').disabled = count < 2;
-  el('startTennis').hidden = !host;
-  el('startTennis').disabled = count !== 2;
-  el('startPogo').hidden = !host;
-  el('startPogo').disabled = count < 2;
-  list('players', players.map(p => p.name + (p.connected ? '' : ' (Reconnecting)')));
-  list('games', games.map(game => {
-    const rule = game.eligible ? 'Player count OK' : game.name === 'Table Tennis'
-      ? '1v1 only — requires exactly 2 players' : 'Requires 2–4 players';
-    return game.name + ' · ' + rule + (game.implemented ? '' : ' · Coming soon');
-  }));
+  el('count').textContent = count + ' / 4 connected';
+  renderPillars(el('players'), players);
+  el('gameHeading').hidden = !host;
+  const buttons = ['start', 'startTennis', 'startPogo'];
+  games.forEach((game, index) => {
+    const button = el(buttons[index]);
+    button.hidden = !host;
+    button.disabled = !game.eligible || !game.implemented;
+    button.dataset.rule = game.name === 'Table Tennis' ? 'Exactly 2 players' : '2–4 players';
+  });
 });

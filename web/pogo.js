@@ -51,23 +51,50 @@ function pumpDetector() {
   };
 }
 
+// Atlas columns: ready, compress, extend, tuck, descend, land.
+function pogoFrame(state, rider) {
+  if (state.phase === 'air') {
+    const progress = state.age / PogoSim.airTicks;
+    if (progress < 0.3) return 2;
+    return progress < 0.65 ? 3 : 4;
+  }
+  if (state.phase === 'finished') return 5;
+  if (state.age - rider.last < 6 || state.age >= PogoSim.chargeTicks - 8) return 1;
+  return state.round > 1 && state.age < 7 ? 5 : 0;
+}
+
 function drawTrack(ctx, s, colors) {
   ctx.clearRect(0, 0, 760, 500);
   s.riders.forEach((r, i) => {
-    const y = 98 + i * 103, left = 38 + i * 12;
+    const y = 119 + i * 103, left = 38 + i * 12;
     const progress = s.phase === 'air' ? s.age / PogoSim.airTicks : 0;
     const x = left + 540 * (r.distance + r.jump * progress) / PogoSim.finish;
     const height = 48 * 4 * progress * (1 - progress);
-    ctx.fillStyle = '#e1ece7'; ctx.fillRect(left, y, 656, 15);
-    ctx.fillStyle = '#233f38'; ctx.fillRect(left + 540, y - 8, 4, 27);
-    ctx.fillStyle = '#79887e'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = colors[r.slot]; ctx.fillRect(x - 2,y - height - 20,4,20);
-    ctx.beginPath(); ctx.arc(x,y - height - 22,10,0,Math.PI*2); ctx.fill();
-    ctx.textAlign = 'left'; ctx.font = 'bold 17px sans-serif';
-    ctx.fillText(r.name + ' · ' + r.distance + ' m', left, y + 37);
-    ctx.fillStyle = '#dee3e3'; ctx.fillRect(left + 290,y + 23,120,12);
-    ctx.fillStyle = r.charge === PogoSim.cap ? '#d78a00' : colors[r.slot];
-    ctx.fillRect(left + 290,y + 23,120 * r.charge / PogoSim.cap,12);
+    ctx.fillStyle = '#dce5db';
+    ctx.beginPath(); ctx.roundRect(left - 15, y - 5, 598, 19, 9); ctx.fill();
+    ctx.fillStyle = '#a9bab0';
+    for (let mark = 1; mark < 7; mark++) ctx.fillRect(left + 540 * mark / 7, y + 6, 2, 7);
+    for (let col = 0; col < 2; col++) for (let row = 0; row < 4; row++) {
+      ctx.fillStyle = (col + row) % 2 ? '#f2f2e9' : '#566e63';
+      ctx.fillRect(left + 540 + col * 5, y - 5 + row * 5, 5, 5);
+    }
+    ctx.fillStyle = '#96aaa0'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
+    if (pogoRiders.complete && pogoRiders.naturalWidth) {
+      const frame = pogoFrame(s, r);
+      ctx.drawImage(pogoRiders, frame * 128, r.slot * 128, 128, 128,
+        x - 36, y - height - 69, 72, 72);
+    } else {
+      ctx.fillStyle = '#546d60'; ctx.fillRect(x - 2,y - height - 20,4,20);
+      ctx.fillStyle = colors[r.slot]; ctx.fillRect(x - 9,y - height - 10,18,4);
+      drawFigure(ctx, r.slot, x, y - height - 7, 52);
+    }
+    ctx.fillStyle = '#31463c'; ctx.textAlign = 'left'; ctx.font = '600 17px system-ui';
+    ctx.fillText(r.name, left, y + 36, 230);
+    for (let pip = 0; pip < PogoSim.cap; pip++) {
+      ctx.fillStyle = pip < r.charge ? colors[r.slot] : '#d1cdc7';
+      ctx.beginPath(); ctx.roundRect(left + 290 + pip * 18,y + 23,14,10,3); ctx.fill();
+    }
+    ctx.fillStyle = '#354b41';
     if (r.charge === PogoSim.cap) ctx.fillText('Burst!',left + 420,y + 35);
   });
 }

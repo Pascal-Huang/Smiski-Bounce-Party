@@ -44,3 +44,14 @@ test('old hits expire and the round ends at 60 seconds', () => {
   for (let i = 0; i < 3600; i++) step(state, {});
   assert.equal(state.tick, 3600);
 });
+
+test('overlap at the rim credits the last opponent even without a closing impulse', () => {
+  const state = create(players);
+  Object.assign(state.cars[0], { x: 99, y: 0 });
+  Object.assign(state.cars[1], { x: 90, y: 0 });
+  step(state, {});
+  assert.equal(state.cars[0].out, 120);
+  assert.equal(state.cars[1].score, 1);
+  step(state, {});
+  assert.equal(state.cars[1].score, 1);
+});

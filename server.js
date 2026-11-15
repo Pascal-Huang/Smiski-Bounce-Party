@@ -12,9 +12,9 @@ function addresses() {
 }
 
 function snapshot(room) {
-  const players = room.players.filter(Boolean).map(({ name, socket }, index) => ({
-    name, connected: Boolean(socket)
-  }));
+  const players = room.players.flatMap((player, slot) => player ? [{
+    name: player.name, slot, connected: Boolean(player.socket)
+  }] : []);
   const count = players.filter(p => p.connected).length;
   const games = ['Bumper Cars', 'Table Tennis', 'Pogo Race'].map(name => ({
     name, eligible: name === 'Table Tennis' ? count === 2 : count >= 2, implemented: true
@@ -38,6 +38,14 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         const png = await QR.toBuffer(target, { width: 256 });
         res.writeHead(200, { 'Content-Type': 'image/png' }).end(png);
       } catch { res.writeHead(400).end(); }
+      return;
+    }
+    if (['/lobby.css', '/figures.png', '/bumper-cars.png', '/pogo-riders.png'].includes(url.pathname)) {
+      const file = join(__dirname, 'web', url.pathname.slice(1));
+      require('node:fs').readFile(file, (error, data) => {
+        if (error) return res.writeHead(404).end();
+        res.writeHead(200, { 'Content-Type': url.pathname.endsWith('.css') ? 'text/css' : 'image/png' }).end(data);
+      });
       return;
     }
     const script = ['/app.js', '/sim.js', '/race.js', '/tennis.js', '/court.js', '/motion.js', '/pogo.js', '/pump.js'].includes(url.pathname);
@@ -83,7 +91,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       }
       socket.data.code = code;
       socket.join(code);
-      ack({ token: player?.token, name: player?.name, id: player?.id, addresses: host ? addresses() : undefined });
+      ack({ token: player?.token, name: player?.name, id: player?.id, slot: player ? room.players.indexOf(player) : undefined, addresses: host ? addresses() : undefined });
       if (room.match) socket.emit('match', room.match);
       broadcast(code, room);
       socket.on('start', (name, reply) => {
