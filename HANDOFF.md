@@ -1,35 +1,32 @@
 # Smiski Bounce Party handoff
 
-## Resume here: Minigame backgrounds
+## Resume here: Polish the backgrounds and minigames
 
-The next session is for experimenting with backgrounds in Bumper Cars, Table Tennis and Pogo Race. Pogo now has a spring pixel park experiment (details below); Bumper Cars and Tennis have no new theme selected. The checkout was clean at `3e6948a` before this handoff edit. Run commands from the `hackhaven` directory and consult `AGENTS.md` for the palette and player identities.
+This handoff was updated on November 15, 2026. **This checkout is already on `alvin-background-branch` at `aafdbef` (background v1), with the polish below uncommitted.** Continue in this checkout; no additional worktree is needed. Main at `3e6948a` has the earlier visuals. Consult `AGENTS.md` for the original typography, branding and player colors.
 
-All three games share the host’s 760 × 500 canvas, `#arena`. For scenery inside the playfield, draw it immediately after the renderer clears the canvas. For scenery around the playfield, look at `body.in-match::before` in `web/lobby.css`. That rule also covers calibration and phone controllers. Scope changes to the host and the intended game if those screens should keep their ivory background. Home and lobby already have a bedroom backdrop.
+Start with a host playthrough from countdown to results and back to the lobby. The earlier checks covered simulation rules and some layout calculations. The latest visual changes still need an in-game check, especially at the 1263 × 631 host size used for feedback.
 
-| Game | Where to experiment | What to check in play |
+| Game | Current design on the background branch | What to check next |
 | --- | --- | --- |
-| Bumper Cars | `web/race.js`: `paintTrampoline()` builds a cached surface. Add static scenery before the trampoline legs and rim, or draw moving scenery in `draw()` before compositing the trampoline. | The rim, blue nitro plume and ring-out marker should stay visible. |
-| Table Tennis | `web/court.js`: `drawCourt()` draws the center divider and two views of the same court. Paint the backdrop before the divider. | Follow the ball and Supersmash flame on both halves and check the timing labels. |
-| Pogo Race | `web/pogo.js`: `drawTrack()` paints the shared spring park SVG, animated birds and scrolling stone lanes before riders. Use its camera mapping for scenery anchored to the course. | Check a spread-out four-player race, Burst wind trails, distance signs and the finish flag. |
+| Pogo Race | One spring Central Park scene with flying birds, Bow Bridge and full-width cobblestone lanes. Both bridge approach paths were removed. Rounded distance signs enter beside the leaderboard. Rider names sit 4 px from the left edge. Art lives in `web/park-backdrop.svg`, layout in `web/lobby.css` and `web/pogo.js`. | Try two and four riders through a Burst and the finish. Watch the first lane against the lake as the window resizes, names during jumps, and signs at the leaderboard edge. |
+| Table Tennis | The supplied championship image is `web/tennis-stadium.png`. The two court views sit between the stands. Usernames sit on the pale floor above each table. Spectators bob during rallies and cheer on points. See `web/court.js` and `web/lobby.css`. | Play a point with two phones. Check name clearance, timing feedback, ball visibility and crowd motion, including reduced motion. |
+| Bumper Cars | The trampoline sits on a 16:9 grass field with small, irregular patches and lighter grass behind the title. Its 76 px legs have rubber feet, contact shadows and a broader deck shadow. See `web/trampoline-field.svg` and `paintTrampoline()` in `web/race.js`. | Look first at the feet and shadows on a short host screen. Check clipping, title contrast and whether a ring-out or boost remains easy to follow near the rim. |
 
-For a first experiment, change one renderer, play through its countdown and winner card, then return to the lobby. Put any new image in `web/` and register its exact public path and MIME type in `server.js`.
+Host music and event cues already exist in `web/audio.js`. The standard UI and branding are the visual baseline for all three games.
 
-## Pogo spring park experiment (November 15)
+### Latest polish pass (November 15)
 
-Pogo Race now uses a pixel-art Central Park-inspired spring theme. `web/park-backdrop.svg` supplies the skyline, blossom trees, flowers, lawn and benches, shared by the arena and full-page background. `drawTrack()` paints camera-anchored stone pavers, pixel birds, park distance signs and rider charge plates. The existing 50 m signs, finish checks and Burst trails remain. Birds respect reduced motion. `pogo-park` is toggled with match state, so the theme clears on return to lobby; the phone controller and results also receive matching park styling. The SVG route requires a server restart.
-
-Validation: 27 renderer scenarios checked 2–4 players, spread camera, Burst and finish with finite coordinates and balanced canvas state. All 3 focused Pogo tests and 14 gameplay/motion tests passed; the existing lobby integration test timed out. Browser visual QA remains outstanding: the in-app browser could not reach the separate development server on 3011, and native Chrome access was denied. Check countdown, four spread-out riders, Burst, finish, results, narrow phone and return to lobby before calling visual QA complete.
-
-## Current audio and effects
-
-The host randomly selects between Fireside Chill and Lobby Music 2 in the lobby, and Game Music 2–4 during play. `web/audio.js` handles playback and event cues. Super Boost chimes when charged and whooshes on use. Supersmash booms on paddle contact. Pogo Burst has a spring and coin chime. Phone vibration code was removed at the owner’s request.
-
+- Bumper Cars now sizes its host canvas using its actual 760 × 540 aspect ratio. The former 760 × 500 sizing allowance made it taller than the available short-screen space, reducing clearance beneath the feet and shadows.
+- Tennis balls now have an ivory surround, dark edge and small highlight for contrast on the brown table and pale floor. Supersmash balls and trails are pink, and all three charge segments turn pink when ready.
+- Tennis names now sit on ivory strips with the player's persistent slot-color marker, including when the host selects a pair from three or four phones.
+- All 14 simulation/motion tests pass. The lobby integration test also passes when run outside the sandbox; inside the sandbox, its initial Socket.IO connection fails with `xhr poll error` and the test times out. No room/server changes were needed.
+- Visual QA is still pending: the in-app browser lost its tab connection before a playthrough could begin. Check these changes at 1263 × 631 and on phones, then complete the game-specific playthroughs listed above. No physical motion or reduced-motion browser check was completed in this pass.
 
 ## Pogo Race today
 
 Two to four phones can pump by tapping **Pump** or by enabling motion and moving the phone up and down. All riders charge and jump together. Each cycle has 1.9 seconds to charge and 0.5 seconds in the air. Each jump travels 4 m plus 2 m per accepted pump. Seven pumps fill the meter and add a 5 m burst, for a maximum jump of 23 m. Distances and standings update together on landing. Once a rider reaches 350 m, the greatest landed distance wins; equal leaders share the win.
 
-The current course scrolls past hills and widens when riders spread out. The bed theme was reverted. Lane ticks, 50 m signs, the vertical checkered finish and the flag arrow starting at 250 m are in place. The extra game canvas frame stays removed.
+The course camera widens when riders spread out. Lane ticks, 50 m signs, the vertical checkered finish and the flag arrow starting at 250 m are in place. The extra game canvas frame stays removed.
 
 - `web/pogo.js` contains the simulation, motion detector, six rider poses and track renderer. The sprite sheet is `web/pogo-riders.png`.
 - `web/pump.js` handles phone input and motion permission. Inputs carry a round number so a delayed pump cannot charge the next jump.
@@ -40,7 +37,7 @@ The current course scrolls past hills and widens when riders spread out. The bed
 
 The laptop hosts a room. Two to four phones join by QR or four-letter code. Each player keeps their nickname and slot color (green, blue, coral red or purple) through reconnects. Use matte ivory, dusty teal, sand and warm gray for scenery.
 
-Home and lobby use a gently animated bedroom backdrop and a frosted-glass player stage. Players bounce on individual trampolines. Four form a diamond, and each phone highlights its own player. The host lobby stacks the three game buttons beneath the QR card. The host wordmark returns an active game to the room lobby, then opens home from the lobby. Pogo uses the spring pixel park; the other games and tennis calibration use plain ivory backgrounds.
+Home and lobby use a gently animated bedroom backdrop and a frosted-glass player stage. Players bounce on individual trampolines. Four form a diamond, and each phone highlights its own player. The host lobby stacks the three game buttons beneath the QR card. The host wordmark returns an active game to the room lobby, then opens home from the lobby. Tennis calibration uses the shared ivory UI.
 
 All three games show a large 3–2–1 countdown on the host and phones. At the finish, the winner’s sprite moves into a card while the playfield remains visible through an ivory backdrop. The card pops with confetti, then moves left as final standings enter from the right. Narrow screens stack the card above standings. Ties show all winners. Reduced-motion mode presents the settled result. The host can rematch or return to the lobby.
 
@@ -54,12 +51,12 @@ The host shows two brown tables with a divider. Timing feedback uses words: Very
 
 ## Run and verify
 
-From the checkout, use Node 22+, `npm ci`, `npm start` and `npm test`. The default port is 3000. The last public demo used **3005** and this [temporary HTTPS lobby](https://tiffany-damages-carried-weekend.trycloudflare.com). Check the link before sharing it again. For a replacement tunnel to a running server on 3005:
+From the checkout, use Node 22+, `npm ci`, `npm start` and `npm test`. The default port is 3000. The last verified preview ran on port **3022** at [this temporary HTTPS lobby](https://lane-namespace-pct-brother.trycloudflare.com/). Quick Tunnel addresses expire. Check the lobby and multiplayer connection before sharing. For a replacement tunnel to a running server on 3022:
 
 ```powershell
-& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3005
+& 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3022
 ```
 
 `server.js` owns rooms, relays Socket.IO events and explicitly lists public asset routes. Browser files are read from disk, but server-side changes require restarting the process behind the demo tunnel. Restarting expires existing rooms. Refresh host and phones after client changes. Use trusted HTTPS to test physical motion.
 
-The latest focused run passed all 11 Bumper Cars, Pogo and Tennis simulation tests after the vibration rollback. The lobby integration test timed out in an earlier run. Background changes need a visual check on the host, including the countdown and results overlay.
+The latest focused run passed all 3 Pogo, 4 tennis, 4 bumper-car and 3 motion tests. The lobby integration test passed separately outside the sandbox. Recheck the current working branch before publishing new changes.

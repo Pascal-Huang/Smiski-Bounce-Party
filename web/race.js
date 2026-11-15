@@ -331,7 +331,7 @@ function display() {
     }
     el('raceInfo').textContent = !host && !myCar() && state.winner === null ? 'Waiting for next round' : '';
     el('scores').textContent = '';
-    el('notice').textContent = state.notice;
+    el('notice').textContent = '';
     return;
   }
   const car = myCar();

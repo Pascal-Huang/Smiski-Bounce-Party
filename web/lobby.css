@@ -472,7 +472,11 @@ body.game-host.pogo-park::before {
   grid-template-columns: 19% minmax(0, 1fr) 19%;
   column-gap: 0;
 }
-.game-host.tennis-stadium #arena { grid-column: 2; }
+.game-host.tennis-stadium #arena {
+  grid-column: 2;
+  position: relative;
+  top: clamp(-32px, -4dvh, -12px);
+}
 .game-host.tennis-stadium #gameHud {
   grid-column: 3;
   min-width: 0;
