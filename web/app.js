@@ -5,6 +5,9 @@ const host = route === 'play';
 const storage = host ? sessionStorage : localStorage;
 const key = 'bounceback/' + route + '/' + code;
 const socket = io();
+history.scrollRestoration = 'manual';
+function scrollToTop() { window.scrollTo(0, 0); }
+window.addEventListener('pageshow', scrollToTop);
 let entering = false;
 let playerId;
 let mySlot;
@@ -46,6 +49,7 @@ async function enter() {
     if (result.error) { status(result.error, true); return; }
     playerId = result.id;
     mySlot = result.slot;
+    scrollToTop();
     if (host) {
       const url = new URL('/c/' + code, location.origin);
       if (['localhost', '127.0.0.1'].includes(url.hostname) && result.addresses.length) {
@@ -58,7 +62,7 @@ async function enter() {
     } else {
       storage.setItem(key, result.token);
       el('join').hidden = true;
-      status('Joined as ' + result.name);
+      status('');
     }
   } catch { status('Connection failed. Try again.', true); }
   finally { entering = false; }
@@ -76,31 +80,53 @@ socket.on('disconnect', () => {
   status('Reconnecting…', true);
 });
 function renderPillars(stage, players, preview = false) {
-  stage.replaceChildren(...Array.from({ length: 4 }, (_, slot) => {
-    const player = players.find(p => p.slot === slot);
+  const previous = new Map(Array.from(stage.children, node => [node.dataset.slot, node.getBoundingClientRect()]));
+  stage.replaceChildren(...players.map((player, index) => {
+    const slot = player.slot;
     const pillar = document.createElement(preview ? 'div' : 'li');
     pillar.className = 'pillar slot-' + slot;
+    pillar.dataset.slot = slot;
+    pillar.classList.toggle('local-player', !host && !preview && slot === mySlot);
+    if (players.length === 4) {
+      const [center, bottom] = [[50, 49], [23, 25], [77, 25], [50, 2]][index];
+      pillar.style.left = (center - 20) + '%';
+      pillar.style.bottom = bottom + '%';
+    } else if (!preview) {
+      const backRow = players.length > 2 && index < players.length - 2;
+      const rowCount = backRow ? players.length - 2 : Math.min(2, players.length);
+      const column = !backRow && players.length > 2 ? index - (players.length - 2) : index;
+      pillar.style.left = ((column + 0.5) / rowCount * 100 - 20) + '%';
+      pillar.style.bottom = players.length <= 2 ? '24%' : backRow ? '51%' : '5%';
+    }
     const base = document.createElement('div');
     base.className = 'plinth';
     pillar.append(base);
-    if (player || preview) {
+    {
       const sprite = document.createElement('span');
       sprite.className = 'figure';
       base.append(sprite);
-      if (player && !player.connected) pillar.classList.add('away');
+      if (!preview && !player.connected) pillar.classList.add('away');
     }
     if (!preview) {
       const name = document.createElement('strong');
-      name.textContent = player?.name || 'Open spot';
+      name.textContent = player.name;
       const state = document.createElement('small');
-      state.textContent = !player ? 'Pillar ' + (slot + 1) : !player.connected
+      state.textContent = !player.connected
         ? 'Reconnecting' : slot === mySlot ? 'You' : 'Connected';
       pillar.append(name, state);
     }
     return pillar;
   }));
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for (const node of stage.children) {
+    const before = previous.get(node.dataset.slot);
+    if (!before) continue;
+    const after = node.getBoundingClientRect();
+    const dx = before.left - after.left, dy = before.top - after.top;
+    if (dx || dy) node.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: 300, easing: 'ease-out' });
+  }
 }
-if (!code) renderPillars(el('preview'), [], true);
+if (!code) renderPillars(el('preview'), Array.from({ length: 4 }, (_, slot) => ({ slot })), true);
 
 let connectedPlayers = [];
 socket.on('roster', ({ players, count, games }) => {

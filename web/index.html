@@ -2,9 +2,9 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Bounceback lobby</title>
+<title>Smiski Bounce Party</title>
 <link rel="stylesheet" href="/lobby.css">
-<header class="brand">Bounceback</header>
+<header class="brand"><a href="/">Smiski Bounce Party</a></header>
 <main>
 <section id="home" hidden>
 <div class="welcome"><div><h1>Party lobby</h1><button id="create">Host a Party</button>
@@ -15,15 +15,15 @@
 <h1 id="heading">Party lobby</h1>
 <form id="join" hidden><label>Nickname (optional) <input id="nickname" maxlength="24" autocomplete="nickname"></label><button>Join Party</button></form>
 <div class="lobby-grid">
-<div id="roster" hidden><div class="stage-heading"><h2>Player pillars</h2><span id="count"></span></div><ul id="players" class="stage" aria-label="Player pillars"></ul></div>
-<aside id="invite" hidden><h2>Join the room</h2><img id="qr" width="160" height="160" alt="Scan with your phone to join"><span>Room code</span><strong id="inviteCode"></strong><p id="address"></p></aside>
-</div>
+<div id="roster" hidden><div class="stage-heading"><h2>Player trampolines</h2><span id="count"></span></div><ul id="players" class="stage" aria-label="Player trampolines"></ul></div>
+<div class="lobby-sidebar"><aside id="invite" hidden><h2>Join the room</h2><img id="qr" width="160" height="160" alt="Scan with your phone to join"><span>Room code</span><strong id="inviteCode"></strong><p id="address"></p></aside>
 <h2 id="gameHeading" hidden>Choose a game</h2>
 <div class="choices">
 <button id="start" hidden>Start Bumper Cars</button>
 <button id="startTennis" hidden>Start Table Tennis</button>
 <button id="startPogo" hidden>Start Pogo Race</button>
 </div>
+</div></div>
 <section id="calibration" hidden><h2>Set up your paddles</h2>
 <div id="remoteSteps" aria-live="polite"></div>
 <button id="startCalibration" hidden>Start calibration</button>
@@ -49,7 +49,6 @@
 <div id="pumpPad" hidden><button id="pump">Pump</button>
 <button id="pumpMotion">Enable pump motion</button><p id="pumpStatus" role="status"></p></div>
 </section>
-<a href="/">Back to home</a>
 </section>
 <p role="status" id="status"></p>
 <button id="retry" hidden>Retry</button>

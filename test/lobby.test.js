@@ -103,7 +103,12 @@ test('a room syncs, reserves and releases four phone slots', { timeout: 10000 },
   const results = once(extra, 'match');
   host.emit('frame', { id: match.id, state: { tick: 3600, cars: [] } });
   assert.equal((await results)[0].phase, 'results');
+  const rematch = once(extra, 'match');
   assert.equal((await host.emitWithAck('start', 'Bumper Cars')).ok, true);
+  assert.equal((await rematch)[0].phase, 'playing');
+  const exited = once(extra, 'match');
+  host.emit('lobby');
+  assert.equal((await exited)[0], null);
   update = once(host, 'roster');
   extra.disconnect();
   await update;

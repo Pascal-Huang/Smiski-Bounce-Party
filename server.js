@@ -171,7 +171,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         } else socket.to(code).emit('frame', frame);
       });
       socket.on('lobby', () => {
-        if (host && ['results', 'calibration'].includes(room.match?.phase)) {
+        if (host && room.match) {
           room.match = null;
           io.to(code).emit('match', null);
         }

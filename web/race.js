@@ -57,6 +57,12 @@ async function start(game, slots) {
     else status(error.message);
   }
 };
+document.querySelector('.brand a').onclick = event => {
+  if (!match) return;
+  event.preventDefault();
+  if (host) socket.emit('lobby');
+  else show(null);
+};
 el('back').onclick = () => socket.emit('lobby');
 function send(boost = false) {
   if (socket.connected && match?.game === 'Bumper Cars' && match.phase === 'playing' && myCar())
@@ -277,9 +283,7 @@ function display() {
       el('clockLabel').textContent = countdown ? 'Starting in' : 'First to 7';
       el('roundClock').textContent = countdown ? Math.ceil(countdown / 1000) : state.players.map(p => p.score).join('–');
     }
-    el('raceInfo').textContent = state.winner !== null ? '' : !host && !myCar() ? 'Waiting for next round' :
-      countdown > 0 ? 'Starting in ' + Math.ceil(countdown / 1000) :
-      state.pause ? state.players[state.hitter].name + ' serves' : '';
+    el('raceInfo').textContent = !host && !myCar() && state.winner === null ? 'Waiting for next round' : '';
     el('scores').textContent = '';
     el('notice').textContent = state.notice;
     return;
@@ -437,6 +441,7 @@ function renderCalibration() {
   el('startCalibration').hidden = !host || match.calibrationStarted === true;
 }
 function show(next) {
+  if (next?.id !== match?.id || next?.phase !== match?.phase) scrollToTop();
   if (next?.id !== match?.id) winnerSprites.clear();
   if (next?.phase !== 'results' && el('victory').open) el('victory').close();
   cancelAnimationFrame(animation);
