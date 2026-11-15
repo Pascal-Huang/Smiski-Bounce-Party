@@ -97,6 +97,23 @@ el('stick').onpointerdown = event => {
 el('stick').onpointermove = steer;
 el('stick').onlostpointercapture = release;
 el('boost').onpointerdown = () => send(true);
+const bumperControls = el('controls');
+function controllerIsZoomed() {
+  return (window.visualViewport?.scale ?? 1) > 1.01;
+}
+function updateControllerTouch() {
+  bumperControls.style.setProperty('--bumper-touch', controllerIsZoomed() ? 'pinch-zoom' : 'none');
+}
+updateControllerTouch();
+window.visualViewport?.addEventListener('resize', updateControllerTouch);
+// Some mobile browsers dispatch native gesture events alongside pointer input.
+function blockControllerZoom(event) {
+  if (!controllerIsZoomed() && event.cancelable) event.preventDefault();
+}
+bumperControls.addEventListener('gesturestart', blockControllerZoom, { passive: false });
+bumperControls.addEventListener('touchstart', event => {
+  if (event.touches.length > 1) blockControllerZoom(event);
+}, { passive: false });
 window.addEventListener('blur', release);
 document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
 
@@ -307,7 +324,8 @@ function display() {
   const count = el('startCount');
   const digit = countdown > 0 ? String(Math.ceil(countdown / 1000)) : '';
   count.hidden = !digit;
-  if (count.textContent !== digit) count.textContent = digit;
+  if (el('countDigit').textContent !== digit) el('countDigit').textContent = digit;
+  el('controllerGrip').hidden = !digit || tennis();
   if (pogo()) {
     if (host) {
       drawTrack(ctx, state, playerColors);
@@ -454,6 +472,7 @@ el('cancelSetup').onclick = () => socket.emit('lobby');
 el('startCalibration').onclick = () => socket.emit('startCalibration', match.id);
 el('resetCalibration').onclick = () => socket.emit('resetCalibration', match.id);
 function renderCalibration() {
+  el('tennisGrip').hidden = Boolean(match.calibrationStarted);
   const own = myCar();
   const remotes = own ? [own] : match.players;
   el('remoteSteps').replaceChildren(...remotes.map(p => {

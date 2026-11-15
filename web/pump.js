@@ -12,7 +12,7 @@ function sendPump() {
       countdown === 0 && state.phase === 'charge')
     socket.emit('input', { id: match.id, round: state.round, pump: true });
 }
-el('pump').onclick = sendPump;
+
 socket.on('pump', data => {
   if (ownsSim() && pogo() && match.id === data.id && !countdown &&
       state.phase === 'charge' && data.round === state.round)
@@ -21,7 +21,7 @@ socket.on('pump', data => {
 el('pumpMotion').onclick = async () => {
   const sensor = window.DeviceMotionEvent;
   if (!window.isSecureContext || !sensor) {
-    el('pumpStatus').textContent = 'Motion needs a supported phone on HTTPS. Tap Pump to charge.';
+    el('pumpStatus').textContent = 'Open the HTTPS room link on a phone with motion sensors.';
     return;
   }
   const session = ++pumpSession;
@@ -33,7 +33,7 @@ el('pumpMotion').onclick = async () => {
   } catch {
     if (session === pumpSession) {
       stopPumpMotion();
-      el('pumpStatus').textContent = 'Motion unavailable. Tap Pump to charge.';
+      el('pumpStatus').textContent = 'Allow motion access in your browser settings, then try again.';
     }
     return;
   }
@@ -41,7 +41,7 @@ el('pumpMotion').onclick = async () => {
   el('pumpStatus').textContent = 'Waiting for phone sensors…';
   const timeout = setTimeout(() => {
     stopPumpMotion();
-    el('pumpStatus').textContent = 'No sensor readings. Tap Pump or retry motion.';
+    el('pumpStatus').textContent = 'No sensor readings. Check motion access, then try again.';
   }, 5000);
   function movement(event) {
     const a = event.acceleration, total = event.accelerationIncludingGravity;

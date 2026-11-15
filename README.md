@@ -41,7 +41,7 @@ certificate and private key file paths, then run `npm start` and open the
 printed HTTPS address matching the certificate.
 
 For **Pogo Race**, join with two to four phones. Tap **Enable pump motion** on
-each HTTPS controller and move the phone up and down, or tap **Pump**. Each
+each HTTPS controller and move the phone up and down. Each
 charge window lasts 1.9 seconds. Seven pumps fill the bar and add a distance
 bonus. Riders jump together every 2.4 seconds. On the first landing across 350 m,
 the farthest rider wins and equal distances share the win.

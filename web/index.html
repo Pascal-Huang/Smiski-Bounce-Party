@@ -26,14 +26,38 @@
 </div>
 </div></div>
 <section id="calibration" hidden><h2>Set up your paddles</h2>
-<div id="remoteSteps" aria-live="polite"></div>
+<div id="tennisGrip" class="grip-guide">
+<svg viewBox="0 0 260 145" aria-hidden="true" fill="none" stroke="#394d46" stroke-width="2.4" stroke-linejoin="round">
+  <g transform="rotate(22 134 74)">
+    <!-- The palm sits behind the phone, with fingertips supporting its lower edge. -->
+    <path fill="#e9bd9e" d="M247 112l-37 3c-18 0-24 9-41 10l-38-2q-9-1-10-7l-12 1q-10-1-10-9l-9-1q-8-2-8-11l4-39 61-19q19-14 38-7l54 22z"/>
+    <rect x="29" y="39" width="157" height="69" rx="11" fill="#a1aea8"/>
+    <rect x="28" y="42" width="155" height="68" rx="10" fill="#263a39"/>
+    <path d="M40 48h48" stroke="#728782" stroke-linecap="round"/>
+    <path fill="#e9bd9e" d="M205 55q-15-24-37-24l-32 4-27 9q-8 3-6 10t13 6l28-5 18 2q10 18 27 20"/>
+    <path d="M107 48q4-3 11-4l5-1q2 5-3 8l-10 3" stroke="#be9279" stroke-width="1.4"/>
+    <path fill="#60756d" d="M213 54l37 3v65l-43-5z"/>
+  </g>
+</svg><p>Face the host screen. Hold the phone sideways in one hand, with your thumb along the upper edge and your fingers underneath.</p>
 <button id="startCalibration" hidden>Start calibration</button>
+</div>
+<div id="remoteSteps" aria-live="polite"></div>
 <button id="resetCalibration" hidden>Reset both paddles</button>
 <div id="motionSetup" hidden><button id="enableMotion" hidden>Allow motion access</button>
 <p id="motionStatus" role="status"></p></div>
 <button id="cancelSetup" hidden>Back to lobby</button></section>
 <section id="race" hidden>
-<div id="startCount" hidden role="status"></div>
+<div id="startCount" hidden role="status"><span id="countDigit"></span>
+<div id="controllerGrip" class="grip-guide" hidden>
+<svg viewBox="0 0 260 130" aria-hidden="true" fill="none" stroke="#364e46" stroke-width="3" stroke-linejoin="round">
+  <path id="leftPalm" fill="#e7bb96" d="M29 120l12-21q-8-12-4-27l10-34q3-8 9-5l10 14 14 15-2 30q-3 12-14 18l-7 17"/>
+  <use href="#leftPalm" transform="translate(260 0) scale(-1 1)"/>
+  <rect x="46" y="26" width="168" height="76" rx="12" fill="#485f58"/>
+  <rect x="53" y="32" width="154" height="63" rx="8" fill="#bbd0c7"/>
+  <path id="leftThumb" fill="#e7bb96" d="M41 81q0-13 9-20l24-19q7-5 11 1t-2 13L66 73q-2 14-12 19"/>
+  <use href="#leftThumb" transform="translate(260 0) scale(-1 1)"/>
+</svg><p>Hold your phone sideways with both hands, like a controller.</p>
+</div></div>
 <h2 id="gameTitle">Bumper Cars</h2><p id="raceInfo"></p>
 <div class="arena-layout">
 <div class="course-surface"><div class="course-paths" aria-hidden="true"></div><canvas id="arena" width="760" height="500" style="width:min(100%,760px)" aria-label="Game arena"></canvas></div>
@@ -48,7 +72,7 @@
 <button id="boost">Boost</button>
 </div>
 <button id="back" hidden>Back to lobby</button>
-<div id="pumpPad" hidden><button id="pump">Pump</button>
+<div id="pumpPad" hidden>
 <button id="pumpMotion">Enable pump motion</button><p id="pumpStatus" role="status"></p></div>
 </section>
 </section>

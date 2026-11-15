@@ -29,7 +29,7 @@ const PartyAudio = (() => {
   function mix() {
     if (!context) return;
     musicBus.gain.setTargetAtTime(settings.music ? 1.32 : 0, context.currentTime, .03);
-    effectsBus.gain.setTargetAtTime(settings.effects ? 3 : 0, context.currentTime, .03);
+    effectsBus.gain.setTargetAtTime(settings.effects ? 4.5 : 0, context.currentTime, .03);
     if (trackScene !== scene && playlists[scene]) chooseTrack();
     if (playlists[scene] && settings.music && !document.hidden) {
       if (player.paused) player.play().catch(() => {});
