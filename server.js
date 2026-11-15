@@ -116,11 +116,13 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
           }
           if (players.length !== 2) return reply({ error: 'Choose two connected players.' });
         }
+        const reusePaddles = name === 'Table Tennis' && room.match?.game === name &&
+          players.every(p => room.match.players.some(previous => previous.id === p.id && previous.step === 7));
         room.driver = socket.id;
         room.match = { id: randomUUID(), game: name, driver: socket.id, phase: 'playing', players };
         if (name === 'Table Tennis') {
-          room.match.phase = 'calibration';
-          room.match.players.forEach(p => { p.step = 0; });
+          room.match.phase = reusePaddles ? 'playing' : 'calibration';
+          room.match.players.forEach(p => { p.step = reusePaddles ? 7 : 0; });
         }
         io.to(code).emit('match', room.match);
         reply({ ok: true });
@@ -130,6 +132,12 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         if (!host || match?.phase !== 'calibration' || match.id !== id || match.calibrationStarted) return;
         match.calibrationStarted = true;
         io.to(code).emit('match', match);
+      });
+      socket.on('resetCalibration', id => {
+        const match = room.match;
+        if (!host || match?.phase !== 'calibration' || !match.calibrationStarted || match.id !== id) return;
+        room.match = { ...match, id: randomUUID(), players: match.players.map(p => ({ ...p, step: 0 })) };
+        io.to(code).emit('match', room.match);
       });
       socket.on('calibration', data => {
         const match = room.match;
@@ -190,6 +198,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         }
         if (!player || player.socket !== socket.id) return;
         const car = room.match?.players.find(p => p.id === player.id);
+        if (car && room.match.game === 'Table Tennis') car.step = 0;
         if (car) io.to(room.driver).emit('drive', { slot: car.slot, x: 0, y: 0, reset: true });
         player.socket = null;
         broadcast(code, room);

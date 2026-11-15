@@ -40,6 +40,8 @@ el('tennisChoices').onchange = updatePair;
 el('cancelPair').onclick = () => el('tennisPicker').close();
 el('confirmPair').onclick = () => start('Table Tennis', chosenSlots());
 async function start(game, slots) {
+  if (game === 'Table Tennis' && tennis() && match.phase === 'results' && !slots)
+    slots = match.players.map(p => p.slot);
   const picker = el('tennisPicker');
   if (game === 'Table Tennis' && connectedPlayers.length > 2 && !slots) {
     el('tennisChoices').replaceChildren();
@@ -450,6 +452,7 @@ el('victoryRematch').onclick = () => start(match.game);
 el('victoryLobby').onclick = () => socket.emit('lobby');
 el('cancelSetup').onclick = () => socket.emit('lobby');
 el('startCalibration').onclick = () => socket.emit('startCalibration', match.id);
+el('resetCalibration').onclick = () => socket.emit('resetCalibration', match.id);
 function renderCalibration() {
   const own = myCar();
   const remotes = own ? [own] : match.players;
@@ -488,13 +491,16 @@ function renderCalibration() {
   el('motionSetup').hidden = !own || own.step === 7;
   el('cancelSetup').hidden = !host;
   el('startCalibration').hidden = !host || match.calibrationStarted === true;
+  el('resetCalibration').hidden = !host || !match.calibrationStarted;
 }
 function show(next) {
   if (next?.id !== match?.id || next?.phase !== match?.phase) scrollToTop();
   if (next?.id !== match?.id) { winnerSprites.clear(); PartyAudio.reset(); }
   if (next?.phase !== 'results' && el('victory').open) el('victory').close();
   cancelAnimationFrame(animation);
-  const resetMotion = next?.id !== match?.id || next?.phase === 'results';
+  const reusePaddle = next?.game === 'Table Tennis' && next.phase === 'playing' &&
+    next.players.some(p => p.id === playerId && p.step === 7) && paddleMotion.active;
+  const resetMotion = next?.id !== match?.id && !reusePaddle;
   const beginCalibration = next?.phase === 'calibration' && next.calibrationStarted &&
     (next.id !== match?.id || !match?.calibrationStarted);
   match = next;
@@ -511,7 +517,7 @@ function show(next) {
   release();
   const playing = match?.phase === 'playing';
   const bumper = match?.game === 'Bumper Cars';
-  const arenaHeight = bumper ? 540 : 500;
+  const arenaHeight = bumper ? 540 : tennis() ? 520 : 500;
   if (canvas.height !== arenaHeight) canvas.height = arenaHeight;
   document.body.classList.toggle('trampoline-field', Boolean(host && bumper));
   standingsKey = undefined;

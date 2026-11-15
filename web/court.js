@@ -29,10 +29,10 @@ function drawRhythm(ctx, player, center, tick) {
     ctx.fillText(player.superSmash ? 'Supersmash' : player.grade, center, 178);
   }
   ctx.fillStyle = '#31463c'; ctx.font = 'bold 15px system-ui';
-  ctx.fillText(player.charge === 3 ? 'Supersmash ready' : 'Smash  ' + player.charge + ' / 3', center, 471);
+  ctx.fillText(player.charge === 3 ? 'Supersmash ready' : 'Smash  ' + player.charge + ' / 3', center, 493);
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = i < player.charge ? '#d7a11e' : '#cdd5cb';
-    ctx.beginPath(); ctx.roundRect(center - 58 + i * 40, 480, 36, 9, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(center - 58 + i * 40, 502, 36, 9, 4); ctx.fill();
   }
 }
 
@@ -40,8 +40,8 @@ function drawCourt(ctx, state) {
   const hasScore = state.players.some(player => player.score > 0);
   document.getElementById('tennisStadium').classList.toggle('cheering',
     hasScore && (state.pause > 0 || state.winner !== null));
-  ctx.clearRect(0, 0, 760, 500);
-  ctx.fillStyle = '#b5b9af'; ctx.fillRect(379, 155, 2, 333);
+  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  ctx.fillStyle = '#b5b9af'; ctx.fillRect(378.5, 155, 3, 356);
   const travel = Math.min(1.12, state.flight / state.duration);
   const depth = state.hitter === 0 ? travel : 1 - travel;
   const lateral = state.from + (state.to - state.from) * Math.min(1, travel);
@@ -50,7 +50,7 @@ function drawCourt(ctx, state) {
     const direction = side ? -1 : 1;
     function project(x, z) {
       const d = side ? 1 - z : z;
-      return [190 + side * 380 + direction * x * (156 - 76 * d), 417 - 230 * d];
+      return [190 + side * 380 + direction * x * (156 - 76 * d), 441 - 230 * d];
     }
     function line(a, b, color, width) {
       ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b);
