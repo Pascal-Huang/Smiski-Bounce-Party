@@ -351,3 +351,147 @@ body.in-match::before { background: #f2f2e9; animation: none; }
 #audioControls { position: fixed; right: 12px; bottom: 12px; z-index: 20; display: flex; gap: 6px; }
 #audioControls[hidden] { display: none; }
 #audioControls button { font-size: 12px; padding: 8px 12px; background: #f2f2e9; color: #29423c; border: 1px solid #d1cdc7; border-radius: 20px; }
+/* Pogo Race: a spring afternoon in a pixel park. */
+body.pogo-park::before {
+  inset: 0;
+  background: #adc78f url('/park-backdrop.svg') center top / cover no-repeat;
+  animation: none;
+}
+.pogo-park #arena { background: transparent; border: 0; box-shadow: none; }
+/* Birds cross the full page sky as well as the course. */
+body.pogo-park::after {
+  content: ''; position: fixed; left: -180px; top: 4%; width: 160px; height: 60px;
+  z-index: -1; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='60' shape-rendering='crispEdges'%3E%3Cpath fill='%234a6b65' d='M8 8h6v4h6V8h6v-4h-6v4h-6V4H8z M68 32h6v4h6v-4h6v-4h-6v4h-6v-4h-6z M124 14h6v4h6v-4h6v-4h-6v4h-6v-4h-6z'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation: parkBirds 26s linear infinite;
+}
+@keyframes parkBirds { to { transform: translateX(calc(100vw + 360px)); } }
+@media (prefers-reduced-motion: reduce) {
+  body.pogo-park::after { animation: none; left: 12%; }
+}
+
+.course-surface { display: contents; }
+.course-paths { display: none; }
+.game-host.pogo-park { overflow-x: clip; }
+.game-host.pogo-park .course-surface { display: block; position: relative; width: 100%; max-width: max(160px, calc((100dvh - 170px) * 1.52)); justify-self: end; container-type: inline-size; }
+.game-host.pogo-park #arena { display: block; position: relative; width: 100%; }
+.game-host.pogo-park .course-paths { display: block; position: absolute; inset: 0; pointer-events: none; }
+.course-paths i { position: absolute; left: -100vw; right: -100vw; height: 6.4%; background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2080%2032%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill%3D%22%23b8b396%22%20d%3D%22M0%205l13%20-2%2017%201%2010%20-2%2016%202%2014%20-2%2010%203v22l-12%202%20-16%20-1%20-12%202%20-16%20-2%20-12%201%20-12%20-2z%22%2F%3E%3Cg%20stroke%3D%22%23b8b396%22%20stroke-width%3D%221.3%22%3E%3Cpath%20fill%3D%22%23d1c9b2%22%20d%3D%22M-2%205l14%20-1%205%204%20-2%205%20-17%201z%20M18%206l18%20-2%204%204%20-2%205%20-18%201%20-3%20-4z%20M42%205l16%201%202%206%20-6%203%20-14%20-2z%20M61%205l17%20-1%205%204%20-2%205%20-19%201z%22%2F%3E%3Cpath%20fill%3D%22%23c4c1ab%22%20d%3D%22M-5%2016l13%20-2%205%204%20-3%206%20-16%201z%20M15%2016l22%20-2%204%205%20-4%206%20-22%201%20-3%20-5z%20M42%2016l14%20-1%205%204%20-2%207%20-17%20-1%20-3%20-5z%20M62%2016l18%20-2%203%208%20-5%203%20-16%20-1z%22%2F%3E%3C%2Fg%3E%3Cpath%20fill%3D%22%2394aa84%22%20d%3D%22M5%2027l4%20-5%20-1%205%204%20-2%20-2%204z%20M48%204l3%20-4%20-1%205z%22%2F%3E%3C%2Fsvg%3E") var(--stone-drift, 0px) center / 10.5263cqw 100% repeat-x; }
+.game-host.pogo-park #gameHud { position: relative; z-index: 1; }
+.game-host.pogo-park .course-surface { z-index: 0; }
+/* The scenery and the course scroll together. The course starts below
+   the shoreline even when the screen is wider than the artwork. */
+body.game-host.pogo-park { position: relative; }
+body.game-host.pogo-park::before {
+  position: absolute;
+  inset: 0 auto auto 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  height: max(100%, 100dvh);
+  background-color: #9cb99a;
+  background-size: max(100vw, 160dvh) auto;
+}
+.game-host.pogo-park .arena-layout { column-gap: 0; padding-top: var(--shore-clearance, 0px); }
+.course-paths .pogo-rider-name {
+  position: absolute;
+  top: 100%;
+  left: calc(100vw + var(--name-left, 0px));
+  padding: .4cqw 1.6cqw;
+  max-width: min(30vw, 250px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 10px;
+  background: #f5f4e7ef;
+  color: #31463c;
+  font: 600 clamp(11px, 2.1cqw, 18px)/1.25 system-ui, sans-serif;
+}
+
+/* Each mask picks spectators from the same image as the stadium. Its soft
+   edge blends their movement into the seats while the architecture stays still. */
+#tennisStadium { display: none; }
+.tennis-stadium #tennisStadium {
+  display: block;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+  --stadium-image: url('/tennis-stadium.png');
+  background: #e7dfd0 var(--stadium-image) center / 100% 100% no-repeat;
+}
+.tennis-stadium #tennisStadium::before,
+.tennis-stadium #tennisStadium::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--stadium-image) center / 100% 100% no-repeat;
+  --fan: #000 58%, transparent 100%;
+  --lift: -1.5px;
+}
+.tennis-stadium #tennisStadium::before {
+  mask-image: radial-gradient(ellipse 2.7% 6% at 3% 17%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 9% 23%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 8% 37%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 3% 46%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 5% 74%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 91% 23%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 96% 32%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 93% 51%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 98% 78%, var(--fan));
+}
+.tennis-stadium #tennisStadium::after {
+  mask-image: radial-gradient(ellipse 3% 6% at 7% 18%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 4% 29%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 12% 29%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 5% 56%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 2% 65%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 97% 17%, var(--fan)),
+    radial-gradient(ellipse 3% 6% at 94% 25%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 89% 39%, var(--fan)),
+    radial-gradient(ellipse 3% 7% at 97% 58%, var(--fan));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tennis-stadium #tennisStadium::before { animation: spectatorBob 2.1s ease-in-out infinite; }
+  .tennis-stadium #tennisStadium::after { animation: spectatorBob 2.6s -.8s ease-in-out infinite; }
+  .tennis-stadium #tennisStadium.cheering::before,
+  .tennis-stadium #tennisStadium.cheering::after {
+    --lift: -5px;
+    animation-duration: .46s;
+  }
+}
+@keyframes spectatorBob {
+  0%, 100% { transform: translateY(0); }
+  48% { transform: translateY(var(--lift)); }
+}
+
+/* The illustrated stands occupy the outer fifths of the stadium. */
+.game-host.tennis-stadium .arena-layout {
+  width: 100vw;
+  margin-inline-start: calc(50% - 50vw);
+  grid-template-columns: 19% minmax(0, 1fr) 19%;
+  column-gap: 0;
+}
+.game-host.tennis-stadium #arena { grid-column: 2; }
+.game-host.tennis-stadium #gameHud {
+  grid-column: 3;
+  min-width: 0;
+  margin-inline-end: min(1vw, 12px);
+}
+@media (max-width: 700px) {
+  .game-host.tennis-stadium #gameHud {
+    grid-column: 2;
+    margin: 8px 0 0;
+  }
+}
+body.trampoline-field::before {
+  inset: 0;
+  background: linear-gradient(to bottom, rgb(247 247 218 / 76%) 0, rgb(247 247 218 / 72%) 130px, transparent 300px),
+    #93ae69 url('/trampoline-field.svg') center / cover no-repeat;
+  animation: none;
+}
+@media (max-width: 700px) {
+  .game-host.tennis-stadium .arena-layout {
+    padding-top: max(0px, calc(36dvh - 12vw - 60px));
+  }
+}

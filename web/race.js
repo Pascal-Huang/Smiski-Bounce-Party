@@ -120,16 +120,46 @@ function paintTrampoline() {
     g.fill();
   }
   g.translate(0, -14);
-  g.lineWidth = 9;
+  function groundShadow(x, y, width, height, opacity) {
+    g.save();
+    g.translate(x, y);
+    g.scale(width, height);
+    const shade = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+    shade.addColorStop(0, 'rgba(37, 49, 35, ' + opacity + ')');
+    shade.addColorStop(0.65, 'rgba(37, 49, 35, ' + opacity * 0.55 + ')');
+    shade.addColorStop(1, 'rgba(37, 49, 35, 0)');
+    g.fillStyle = shade;
+    g.fillRect(-1, -1, 2, 2);
+    g.restore();
+  }
+
+  // One soft shadow under the deck, with tighter shadows at the feet.
+  groundShadow(383, 317, 366, 225, 0.38);
   g.lineCap = 'round';
   for (const angle of [0.16, 0.82, 1.57, 2.32, 2.98]) {
     const x = 380 + 350 * Math.cos(angle);
     const y = 250 + 213 * Math.sin(angle);
+    const footX = x + 9 * Math.cos(angle);
+    const footY = y + 76;
+    groundShadow(footX + 4, footY + 2, 21, 6, 0.52);
+
     g.beginPath();
     g.moveTo(x, y);
-    g.lineTo(x + 5 * Math.cos(angle), y + 44);
-    g.strokeStyle = '#667d74';
+    g.lineTo(footX, footY);
+    g.strokeStyle = '#50665c';
+    g.lineWidth = 9;
     g.stroke();
+    g.beginPath();
+    g.moveTo(x - 2, y);
+    g.lineTo(footX - 2, footY - 3);
+    g.strokeStyle = '#94a69a';
+    g.lineWidth = 2;
+    g.stroke();
+
+    g.fillStyle = '#45554a';
+    g.beginPath();
+    g.roundRect(footX - 7, footY - 2, 14, 5, 2);
+    g.fill();
   }
   oval(256, 358, 222, '#58746a');
   oval(250, 358, 222, '#9fb9a9');
@@ -468,6 +498,7 @@ function show(next) {
   const beginCalibration = next?.phase === 'calibration' && next.calibrationStarted &&
     (next.id !== match?.id || !match?.calibrationStarted);
   match = next;
+  document.body.classList.toggle('tennis-stadium', Boolean(host && tennis() && next.phase !== 'calibration'));
   PartyAudio.setScene(next ? next.phase : 'lobby');
   if (resetMotion) paddleSetup.stop('');
   if (beginCalibration && myCar()) paddleSetup.begin();
@@ -475,10 +506,14 @@ function show(next) {
   el('calibration').hidden = !setup;
   document.body.classList.toggle('calibrating', setup);
   document.body.classList.toggle('in-match', Boolean(match));
+  document.body.classList.toggle('pogo-park', Boolean(match && pogo()));
   inputs = {};
   release();
   const playing = match?.phase === 'playing';
   const bumper = match?.game === 'Bumper Cars';
+  const arenaHeight = bumper ? 540 : 500;
+  if (canvas.height !== arenaHeight) canvas.height = arenaHeight;
+  document.body.classList.toggle('trampoline-field', Boolean(host && bumper));
   standingsKey = undefined;
   document.body.classList.toggle('bumper-pad', Boolean(bumper && playing && !host && myCar()));
   document.body.classList.toggle('game-host', Boolean(match && host));

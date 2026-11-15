@@ -4,6 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Smiski Bounce Party</title>
 <link rel="stylesheet" href="/lobby.css">
+<div id="tennisStadium" aria-hidden="true"></div>
 <header class="brand"><a href="/">Smiski Bounce Party</a></header>
 <div id="audioControls" hidden role="group" aria-label="Host audio"><button id="musicToggle" type="button">Music: on</button><button id="effectsToggle" type="button">Effects: on</button></div>
 <main>
@@ -34,7 +35,7 @@
 <div id="startCount" hidden role="status"></div>
 <h2 id="gameTitle">Bumper Cars</h2><p id="raceInfo"></p>
 <div class="arena-layout">
-<canvas id="arena" width="760" height="500" style="width:min(100%,760px)" aria-label="Game arena"></canvas>
+<div class="course-surface"><div class="course-paths" aria-hidden="true"></div><canvas id="arena" width="760" height="500" style="width:min(100%,760px)" aria-label="Game arena"></canvas></div>
 <aside id="gameHud" hidden>
 <div class="clock-card"><span id="clockLabel">Time left</span><strong id="roundClock"></strong></div>
 <h3>Leaderboard</h3><ol id="standings"></ol>

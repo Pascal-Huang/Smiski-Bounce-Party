@@ -37,6 +37,9 @@ function drawRhythm(ctx, player, center, tick) {
 }
 
 function drawCourt(ctx, state) {
+  const hasScore = state.players.some(player => player.score > 0);
+  document.getElementById('tennisStadium').classList.toggle('cheering',
+    hasScore && (state.pause > 0 || state.winner !== null));
   ctx.clearRect(0, 0, 760, 500);
   ctx.fillStyle = '#b5b9af'; ctx.fillRect(379, 10, 2, 478);
   const travel = Math.min(1.12, state.flight / state.duration);
@@ -94,7 +97,7 @@ function drawCourt(ctx, state) {
     ctx.fillStyle = '#ffbb3c'; ctx.beginPath(); ctx.arc(bx,by-height,8,0,Math.PI*2); ctx.fill();
     ctx.fillStyle = '#182f3a'; ctx.textAlign = 'center'; ctx.font = 'bold 20px sans-serif';
     const center = 190 + side * 380;
-    ctx.fillText(player.name, center, 48, 350);
+    ctx.fillText(player.name, center, 155, 330);
     drawRhythm(ctx, player, center, state.tick);
   });
 }

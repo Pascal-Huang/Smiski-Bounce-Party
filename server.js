@@ -45,11 +45,11 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       require('node:fs').createReadStream(join(__dirname, 'web', url.pathname.slice(1))).pipe(res);
       return;
     }
-    if (['/lobby.css', '/room-backdrop.png', '/figures.png', '/bumper-cars.png', '/pogo-riders.png', '/tennis-players.png'].includes(url.pathname)) {
+    if (['/lobby.css', '/park-backdrop.svg', '/trampoline-field.svg', '/room-backdrop.png', '/figures.png', '/bumper-cars.png', '/pogo-riders.png', '/tennis-players.png', '/tennis-stadium.png'].includes(url.pathname)) {
       const file = join(__dirname, 'web', url.pathname.slice(1));
       require('node:fs').readFile(file, (error, data) => {
         if (error) return res.writeHead(404).end();
-        res.writeHead(200, { 'Content-Type': url.pathname.endsWith('.css') ? 'text/css' : 'image/png' }).end(data);
+        res.writeHead(200, { 'Content-Type': url.pathname.endsWith('.css') ? 'text/css' : url.pathname.endsWith('.svg') ? 'image/svg+xml' : 'image/png' }).end(data);
       });
       return;
     }

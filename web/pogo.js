@@ -63,7 +63,28 @@ function pogoFrame(state, rider) {
   return state.round > 1 && state.age < 7 ? 5 : 0;
 }
 
+const firstPogoLane = 190;
+let courseObserver;
+
+function alignParkCourse(surface) {
+  const layout = surface.parentElement;
+  function positionLanes() {
+    surface.style.setProperty('--name-left', (4 - surface.getBoundingClientRect().left) + 'px');
+    const artworkScale = Math.max(window.innerWidth / 1440, window.innerHeight / 900);
+    const shoreline = 312 * artworkScale;
+    const top = layout.getBoundingClientRect().top - document.body.getBoundingClientRect().top;
+    const laneEdge = (firstPogoLane - 14) * surface.clientWidth / 760;
+    layout.style.setProperty('--shore-clearance', Math.max(0, Math.ceil(shoreline + 20 - top - laneEdge)) + 'px');
+  }
+  positionLanes();
+  courseObserver = new ResizeObserver(positionLanes);
+  courseObserver.observe(surface);
+  courseObserver.observe(document.querySelector('.brand'));
+  window.addEventListener('resize', positionLanes);
+}
+
 function drawTrack(ctx, s, colors) {
+  ctx.save();
   const progress = s.phase === 'air' ? s.age / PogoSim.airTicks : 0;
   const positions = s.riders.map(r => r.distance + r.jump * progress);
   const front = Math.max(...positions), rear = Math.min(...positions);
@@ -72,28 +93,30 @@ function drawTrack(ctx, s, colors) {
   const offset = Math.max(-60, (front + rear) * scale / 2 - 350);
   const screenX = meters => meters * scale - offset;
   ctx.clearRect(0, 0, 760, 500);
-  ctx.fillStyle = '#aec3c1';
-  ctx.fillRect(0, 0, 760, 65);
-  for (let layer = 1; layer <= 2; layer++) {
-    const spacing = layer === 1 ? 248 : 162;
-    const drift = ((front + rear) * layer * 0.8) % spacing;
-    ctx.fillStyle = layer === 1 ? '#d6dfd6' : '#edd4b5';
-    for (let x = -drift; x < 760 + spacing; x += spacing) {
-      ctx.beginPath();
-      ctx.ellipse(x, 65, spacing * 0.68, 46 / layer, 0, Math.PI, 2 * Math.PI);
-      ctx.fill();
-    }
-  }
   const firstMark = Math.max(0, Math.ceil(offset / scale / 5) * 5);
   const finishX = screenX(PogoSim.finish);
-  const lastLaneY = 137 + (s.riders.length - 1) * 103;
-  for (let y = 137; y <= lastLaneY; y += 103) {
-    ctx.fillStyle = '#dce5db';
-    ctx.fillRect(0, y - 5, 760, 19);
+  const laneY = index => firstPogoLane + index * 84;
+  const lastLaneY = laneY(s.riders.length - 1);
+  const paths = document.querySelector('.course-paths');
+  if (!courseObserver) alignParkCourse(paths.parentElement);
+  if (paths.childElementCount !== s.riders.length || paths.riders !== s.riders &&
+      s.riders.some((r, i) => paths.children[i]?.firstChild?.textContent !== r.name)) {
+    paths.replaceChildren(...s.riders.map((_, i) => {
+      const lane = document.createElement('i');
+      lane.style.top = (laneY(i) - 14) / 5 + '%';
+      const name = document.createElement('span');
+      name.className = 'pogo-rider-name';
+      name.textContent = s.riders[i].name;
+      lane.append(name);
+      return lane;
+    }));
+  }
+  paths.riders = s.riders;
+  paths.style.setProperty('--stone-drift', (-offset % 80) / 760 * 100 + 'cqw');
+  for (let i = 0; i < s.riders.length; i++) {
+    const y = laneY(i);
     for (let mark = firstMark; mark < PogoSim.finish && screenX(mark) < 760; mark += 5) {
-      const major = mark % 50 === 0;
-      ctx.fillStyle = '#849b90';
-      ctx.fillRect(screenX(mark), y - 3, major ? 3 : 1, major ? 15 : 7);
+      ctx.fillStyle = '#788a70'; ctx.fillRect(Math.round(screenX(mark)), y + 16, mark % 50 === 0 ? 4 : 2, 3);
     }
   }
 
@@ -101,12 +124,14 @@ function drawTrack(ctx, s, colors) {
     const signX = screenX(mark);
     if (signX < -24 || signX > 784) continue;
     ctx.fillStyle = '#64776c';
-    ctx.fillRect(signX - 2, 99, 4, 33);
+    ctx.fillRect(signX - 2, 158, 4, 33);
     ctx.fillStyle = '#39594e';
-    ctx.beginPath(); ctx.roundRect(signX - 23, 82, 46, 20, 4); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(Math.round(signX) - 25, 139, 50, 24, 7); ctx.fill();
+    ctx.strokeStyle = '#c6d7a1'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.roundRect(Math.round(signX) - 22, 142, 44, 18, 5); ctx.stroke();
     ctx.fillStyle = '#fffdf5';
     ctx.textAlign = 'center'; ctx.font = '600 12px system-ui';
-    ctx.fillText(mark === 0 ? 'Start' : mark + ' m', signX, 96);
+    ctx.fillText(mark === 0 ? 'Start' : mark + ' m', signX, 155);
   }
 
   if (finishX < 770 && finishX > -20) {
@@ -138,7 +163,7 @@ function drawTrack(ctx, s, colors) {
   }
 
   s.riders.forEach((r, i) => {
-    const y = 137 + i * 103, left = 24;
+    const y = laneY(i);
     const x = screenX(positions[i]);
     const height = (19 + r.jump * 1.65) * 4 * progress * (1 - progress);
     ctx.fillStyle = '#96aaa0'; ctx.beginPath(); ctx.ellipse(x,y,12,4,0,0,Math.PI*2); ctx.fill();
@@ -171,14 +196,20 @@ function drawTrack(ctx, s, colors) {
       ctx.fillStyle = colors[r.slot]; ctx.fillRect(x - 9,y - height - 10,18,4);
       drawFigure(ctx, r.slot, x, y - height - 7, 52);
     }
-    ctx.fillStyle = '#31463c'; ctx.textAlign = 'left'; ctx.font = '600 17px system-ui';
-    ctx.fillText(r.name, left, y + 36, 230);
+  });
+
+  // Draw charge meters above the riders.
+  s.riders.forEach((r, i) => {
+    const y = laneY(i);
+    ctx.font = '600 16px system-ui';
+    ctx.textAlign = 'center';
     for (let pip = 0; pip < PogoSim.cap; pip++) {
       ctx.fillStyle = pip < r.charge ? colors[r.slot] : '#d1cdc7';
-      ctx.beginPath(); ctx.roundRect(left + 290 + pip * 18,y + 23,14,10,3); ctx.fill();
+      ctx.fillRect(320 + pip * 18, y + 25,14,10);
     }
     ctx.fillStyle = '#354b41';
-    if (r.charge === PogoSim.cap) ctx.fillText('Burst!',left + 420,y + 35);
+    if (r.charge === PogoSim.cap) ctx.fillText('Burst!', 484, y + 35);
   });
+  ctx.restore();
 }
 if (typeof module !== 'undefined') module.exports = { PogoSim, pumpDetector };
