@@ -80,16 +80,19 @@ const PartyAudio = (() => {
   document.addEventListener('keydown', unlock);
   document.addEventListener('visibilitychange', mix);
   let airBuffer;
-  function whoosh() {
-    const length = .32, at = context.currentTime;
+  function noiseBuffer() {
     if (!airBuffer) {
-      airBuffer = context.createBuffer(1, Math.ceil(context.sampleRate * length), context.sampleRate);
+      airBuffer = context.createBuffer(1, Math.ceil(context.sampleRate * .32), context.sampleRate);
       const samples = airBuffer.getChannelData(0);
       for (let i = 0; i < samples.length; i++) samples[i] = Math.random() * 2 - 1;
     }
+    return airBuffer;
+  }
+  function whoosh() {
+    const length = .32, at = context.currentTime;
     const air = context.createBufferSource(), filter = context.createBiquadFilter();
     const envelope = context.createGain();
-    air.buffer = airBuffer;
+    air.buffer = noiseBuffer();
     filter.type = 'bandpass';
     filter.frequency.setValueAtTime(520, at);
     filter.frequency.exponentialRampToValueAtTime(3800, at + .23);
@@ -99,9 +102,32 @@ const PartyAudio = (() => {
     air.connect(filter).connect(envelope).connect(effectsBus);
     air.start(at);
   }
+  function sparkExplosion() {
+    const at = context.currentTime;
+    const noise = context.createBufferSource();
+    const filter = context.createBiquadFilter();
+    const envelope = context.createGain();
+    noise.buffer = noiseBuffer();
+    filter.type = 'bandpass';
+    filter.Q.value = .8;
+    filter.frequency.setValueAtTime(3200, at);
+    filter.frequency.exponentialRampToValueAtTime(1500, at + .28);
+    // One broad snap followed by smaller, unevenly spaced sparks.
+    for (const [delay, level, decay] of [[0, .78, .065], [.078, .44, .025],
+      [.12, .32, .018], [.17, .28, .025], [.245, .17, .02]]) {
+      const start = at + delay;
+      envelope.gain.setValueAtTime(.001, start);
+      envelope.gain.linearRampToValueAtTime(level, start + .002);
+      envelope.gain.exponentialRampToValueAtTime(.001, start + decay);
+    }
+    noise.connect(filter).connect(envelope).connect(effectsBus);
+    noise.start(at);
+    noise.stop(at + .28);
+  }
   function cue(name) {
     if (!host || !effectsBus || !settings.effects || context.state !== 'running') return;
     if (name === 'poweredLaunch') whoosh();
+    if (name === 'smashImpact') sparkExplosion();
     const notes = {
       count: [[440, .1, .24]], go: [[523, .12, .3], [784, .22, .3, .12]],
       jump: [[220, .22, .3, 0, 660]], land: [[140, .16, .35, 0, 65]],
@@ -113,6 +139,7 @@ const PartyAudio = (() => {
       burst: [[145, .09, .31, 0, 540], [540, .07, .25, .08, 230], [230, .08, .20, .14, 420],
         [420, .07, .14, .21, 300], [1047, .08, .24, .29], [1568, .39, .25, .38], [3730, .17, .10, .38]],
       perfect: [[880, .22, .28], [1319, .32, .23, .075]],
+      smashImpact: [[165, .24, .40, 0, 48, 'triangle'], [410, .055, .18, 0, 130, 'sawtooth']],
       // Layer a sharp attack over a longer bass tail.
       supersmash: [[210, .16, .48, 0, 55, 'triangle'], [90, .63, .43, .025, 38],
         [340, .08, .19, 0, 115, 'sawtooth'], [125, .30, .16, .10, 58]],
@@ -129,10 +156,11 @@ const PartyAudio = (() => {
       score: players.reduce((sum, p) => sum + (p.score || 0), 0),
       cars: state.cars?.map(c => ({ charge: c.charge, out: c.out, cooldown: c.cooldown, hitTick: c.hitTick })),
       riderCharge: state.riders?.map(r => r.charge),
-      grades: state.players?.map(p => p.gradeTick) };
+      grades: state.players?.map(p => p.gradeTick), impactTick: state.smashImpact?.tick };
     if (previous?.game === game) {
       if (current.count !== previous.count) cue(current.count ? 'count' : 'go');
       if (!current.count) {
+        if (current.impactTick !== undefined && current.impactTick !== previous.impactTick) cue('smashImpact');
         if (current.riderCharge?.some((charge, i) => charge === PogoSim.cap && previous.riderCharge[i] < charge)) cue('burst');
         if (current.phase !== previous.phase) {
           if (current.phase === 'air') cue('jump');

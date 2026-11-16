@@ -43,6 +43,12 @@ const TennisSim = (() => {
     const player = s.players[receiver];
     const action = inputs[player.slot];
     const progress = s.flight / s.duration;
+    // The court's bounce arc reaches the tabletop at three quarters of the flight.
+    if (s.players[s.hitter].superSmash && s.duration === 33 &&
+        s.flight === Math.ceil(s.duration * 0.75)) {
+      s.smashImpact = { tick: s.tick, x: s.from + (s.to - s.from) * 0.75,
+        depth: s.hitter === 0 ? 0.75 : 0.25 };
+    }
     if (action?.swing && !s.attempted) {
       s.attempted = true;
       const grade = timing(progress);

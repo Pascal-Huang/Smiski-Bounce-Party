@@ -81,6 +81,25 @@ function drawCourt(ctx, state) {
     const [px, py] = project(target ? state.to : state.from, side);
     drawTennisPlayer(ctx, player, state.winner === null ? state.tick : Infinity, px, py + 24);
     const [bx, by] = project(lateral, depth);
+    if (state.smashImpact) {
+      const age = (state.tick - state.smashImpact.tick) / 20;
+      if (age >= 0 && age < 1) {
+        const [x, y] = project(state.smashImpact.x, state.smashImpact.depth);
+        const radius = 9 + 38 * age;
+        ctx.save();
+        ctx.globalAlpha = 1 - age;
+        ctx.strokeStyle = '#ffdc8c'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(x, y, radius, radius * .43, 0, 0, 2 * Math.PI); ctx.stroke();
+        ctx.strokeStyle = '#ff823e'; ctx.lineWidth = 3;
+        for (let i = 0; i < 8; i++) {
+          const angle = i * Math.PI / 4;
+          const dx = Math.cos(angle), dy = Math.sin(angle) * .62;
+          ctx.beginPath(); ctx.moveTo(x + radius * dx, y + radius * dy);
+          ctx.lineTo(x + (radius + 9) * dx, y + (radius + 9) * dy); ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
     const height = 8 + 40 * Math.abs(Math.sin(Math.PI * (travel + 0.25)));
     if (depth >= 0 && depth <= 1 && Math.abs(lateral) <= 1) {
       ctx.fillStyle = '#593f30'; ctx.beginPath(); ctx.ellipse(bx,by,7,3,0,0,Math.PI*2); ctx.fill();
