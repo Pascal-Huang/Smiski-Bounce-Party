@@ -51,6 +51,7 @@ async function enter() {
     playerId = result.id;
     mySlot = result.slot;
     scrollToTop();
+    el('addBot').hidden = !result.playtest;
     if (host) {
       const url = new URL('/c/' + code, location.origin);
       if (['localhost', '127.0.0.1'].includes(url.hostname) && result.addresses.length) {
@@ -72,8 +73,12 @@ async function enter() {
 el('join').onsubmit = event => { event.preventDefault(); enter(); };
 el('retry').onclick = () => { if (!socket.connected) socket.connect(); else if (code) enter(); };
 socket.on('connect', () => {
-  status('');
+  status(!code && location.search === '?removed=1' ? 'The host removed you from the room.' : '');
   if (code && (host || storage.getItem(key))) enter();
+});
+socket.on('removed', () => {
+  storage.removeItem(key);
+  location.replace('/?removed=1');
 });
 socket.on('connect_error', () => status('Could not reach the room server.', true));
 socket.on('disconnect', () => {
@@ -113,8 +118,29 @@ function renderPillars(stage, players, preview = false) {
       name.textContent = player.name;
       const state = document.createElement('small');
       state.textContent = !player.connected
-        ? 'Reconnecting' : slot === mySlot ? 'You' : 'Connected';
+        ? 'Reconnecting' : player.bot ? 'Bot' : slot === mySlot ? 'You' : 'Connected';
       pillar.append(name, state);
+      if (host) {
+        const remove = document.createElement('button');
+        remove.className = 'remove-player';
+        remove.type = 'button';
+        remove.textContent = '×';
+        remove.setAttribute('aria-label', 'Remove ' + player.name);
+        remove.title = 'Remove ' + player.name;
+        remove.onclick = async () => {
+          remove.disabled = true;
+          try {
+            const result = await socket.timeout(5000).emitWithAck('removePlayer', player.id);
+            status(result.error || '');
+          } catch { status('Could not remove the player. Try again.'); }
+          finally { remove.disabled = false; }
+        };
+        const frame = document.createElement('div');
+        frame.className = 'sprite-frame';
+        const spriteElement = base.firstElementChild;
+        spriteElement.replaceWith(frame);
+        frame.append(spriteElement, remove);
+      }
     }
     return pillar;
   }));
@@ -129,9 +155,18 @@ function renderPillars(stage, players, preview = false) {
 }
 if (!code) renderPillars(el('preview'), Array.from({ length: 4 }, (_, slot) => ({ slot })), true);
 
+el('addBot').onclick = async () => {
+  el('addBot').disabled = true;
+  try {
+    const result = await socket.timeout(5000).emitWithAck('addBot');
+    status(result.error || '');
+  } catch { status('Could not add a bot. Try again.'); }
+  finally { el('addBot').disabled = connectedPlayers.length >= 4; }
+};
 let connectedPlayers = [];
 socket.on('roster', ({ players, count, games }) => {
   connectedPlayers = players.filter(p => p.connected);
+  el('addBot').disabled = players.length >= 4;
   if (el('tennisPicker').open) renderTennisChoices();
   el('roster').hidden = false;
   el('count').textContent = count + ' / 4 connected';

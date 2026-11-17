@@ -387,7 +387,7 @@ function run() {
     if (countdown > 0) countdown = Math.max(0, countdown - elapsed);
     else debt += Math.min(elapsed, 250);
     while (debt >= 1000 / 60 && !finished()) {
-      sim.step(state, inputs);
+      sim.step(state, tennis() ? { ...inputs, ...TennisSim.botInputs(state) } : inputs);
       PartyAudio.observe(match.game, state, countdown);
       Object.values(inputs).forEach(input => { input.boost = false; input.swing = false; input.pump = false; });
       debt -= 1000 / 60;

@@ -1,26 +1,18 @@
 # Smiski Bounce Party handoff
 
-## Resume here: Polish the backgrounds and minigames
+## Resume here (November 16, 2026)
 
-This handoff was updated on November 15, 2026. **This checkout is already on `alvin-background-branch` at `aafdbef` (background v1), with the polish below uncommitted.** Continue in this checkout; no additional worktree is needed. Main at `3e6948a` has the earlier visuals. Consult `AGENTS.md` for the original typography, branding and player colors.
+The phone-controlled game is on `main` in `hackhaven/`. The latest gameplay commit is `8f8e432`. Start with a two-phone Table Tennis rally on the 1263 × 631 host display. Land four Perfect returns and listen for the launch and the separate impact. Judge whether the crackle is audible over the game music on laptop speakers.
 
-Start with a host playthrough from countdown to results and back to the lobby. The earlier checks covered simulation rules and some layout calculations. The latest visual changes still need an in-game check, especially at the 1263 × 631 host size used for feedback.
-
-| Game | Current design on the background branch | What to check next |
+| Game | Current presentation and controls | Next playtest |
 | --- | --- | --- |
-| Pogo Race | One spring Central Park scene with flying birds, Bow Bridge and full-width cobblestone lanes. Both bridge approach paths were removed. Rounded distance signs enter beside the leaderboard. Rider names sit 4 px from the left edge. Art lives in `web/park-backdrop.svg`, layout in `web/lobby.css` and `web/pogo.js`. | Try two and four riders through a Burst and the finish. Watch the first lane against the lake as the window resizes, names during jumps, and signs at the leaderboard edge. |
-| Table Tennis | The supplied championship image is `web/tennis-stadium.png`. The two court views sit between the stands. Usernames sit on the pale floor above each table. Spectators bob during rallies and cheer on points. See `web/court.js` and `web/lobby.css`. | Play a point with two phones. Check name clearance, timing feedback, ball visibility and crowd motion, including reduced motion. |
-| Bumper Cars | The trampoline sits on a 16:9 grass field with small, irregular patches and lighter grass behind the title. Its 76 px legs have rubber feet, contact shadows and a broader deck shadow. See `web/trampoline-field.svg` and `paintTrampoline()` in `web/race.js`. | Look first at the feet and shadows on a short host screen. Check clipping, title contrast and whether a ring-out or boost remains easy to follow near the rim. |
+| Table Tennis | The stadium retains the top-center SMISKI sign. Timing grades appear below the player names. The tables and smash bars sit lower, with a shortened center divider. | Check label clearance and the Supersmash burst in both court views. Reset calibration midway, then finish a round and rematch with the same phones. |
+| Pogo Race | Riders pump by moving a phone up and down after granting motion access. A frosted countdown card shows the two-handed landscape grip. The park has full-width cobblestone lanes and 50 m signs. | Try two and four riders through a Burst and the finish. Check the first lane against the shoreline as the host resizes. |
+| Bumper Cars | The trampoline stands on the supplied grass texture. The frosted countdown card shows the controller grip. At normal zoom, the controller blocks accidental pinches while steering and boosting. An already enlarged page allows pinch recovery. | Hold the joystick and press Boost on a physical phone. Check zoom recovery, the trampoline feet and ring-outs on a short host screen. |
 
-Host music and event cues already exist in `web/audio.js`. The standard UI and branding are the visual baseline for all three games.
+## Offline itch.io edition (settled)
 
-### Latest polish pass (November 15)
-
-- Bumper Cars now sizes its host canvas using its actual 760 × 540 aspect ratio. The former 760 × 500 sizing allowance made it taller than the available short-screen space, reducing clearance beneath the feet and shadows.
-- Tennis balls now have an ivory surround, dark edge and small highlight for contrast on the brown table and pale floor. Supersmash balls and trails are pink, and all three charge segments turn pink when ready.
-- Tennis names now sit on ivory strips with the player's persistent slot-color marker, including when the host selects a pair from three or four phones.
-- All 14 simulation/motion tests pass. The lobby integration test also passes when run outside the sandbox; inside the sandbox, its initial Socket.IO connection fails with `xhr poll error` and the test times out. No room/server changes were needed.
-- Visual QA is still pending: the in-app browser lost its tab connection before a playthrough could begin. Check these changes at 1263 × 631 and on phones, then complete the game-specific playthroughs listed above. No physical motion or reduced-motion browser check was completed in this pass.
+The keyboard edition is archived for reference in `../hackhaven-itch` on branch `itch-local-multiplayer` at `d3bbb1b`. Current playtests focus on the phone-controlled game on `main`.
 
 ## Pogo Race today
 
@@ -43,15 +35,15 @@ All three games show a large 3–2–1 countdown on the host and phones. At the 
 
 ## Other games
 
-**Table Tennis.** Exactly two players compete, first to seven. With three or four phones connected, the host chooses the pair. The host presses **Start calibration** once for both paddles. Players hold phones edge-on and follow arrows through two rounds of left, right and forward strokes. A missed verification retries that direction. Each player gets a green check on completion; both must finish before the countdown. A phone may need a local tap to grant browser motion permission. Tennis uses motion only. Calibration has wider host cards and a slim tapered forward arrow. The serve announcement above the court was removed to prevent layout shifts.
+**Table Tennis.** Exactly two players compete, first to seven. With three or four phones connected, the host chooses the pair. The host presses **Start calibration** once for both paddles. The pre-calibration diagram shows a one-handed sideways grip, thumb along the upper edge and fingers underneath. The host can use **Reset both paddles** during setup. A results-screen rematch reuses calibration for the same two connected players. Players hold phones edge-on and follow arrows through two rounds of left, right and forward strokes. A missed verification retries that direction. Each player gets a green check on completion; both must finish before the countdown. A phone may need a local tap to grant browser motion permission. Tennis uses motion only. Calibration has wider host cards and a slim tapered forward arrow. The serve announcement above the court was removed to prevent layout shifts.
 
-The host shows two brown tables with a divider. Timing feedback uses words: Very early / Very late in red, Early / Late in amber, Perfect in gold. Three Perfects fill a player’s three-segment meter. It stays charged across points and non-Perfect returns. The next Perfect fires a pink **Supersmash** and empties the meter. Tennis rules live in `web/tennis.js`, rendering in `web/court.js`, and calibration in `web/motion.js`.
+The host shows two brown tables with a divider. Timing feedback uses words: Very early / Very late in red, Early / Late in amber, Perfect in gold. Three Perfects fill a player’s three-segment meter. It stays charged across points and non-Perfect returns. The next Perfect fires a **Supersmash** and empties the meter. At the bounce, a gold shockwave and orange sparks appear in both views. A separate bass impact, sharp snap and four fading crackles play on the host through the effects channel. Audio lives in `web/audio.js`. Tennis rules live in `web/tennis.js`, rendering in `web/court.js`, and calibration in `web/motion.js`.
 
 **Bumper Cars.** Phones have a joystick and Boost button. Directional cars battle on a trampoline; a credited ring-out earns one point. Five bumps into opponents charge Super Boost. The host ring and phone meter fill yellow and turn Supersmash pink when full. Regular boost launches at 2.4 units per tick and Super Boost at 3.4, with doubled collision impulse. A ring-out clears charge, freezes the car at the rim, and shows a flash, fade, impact ring and OUT marker before respawn. The host shows a timer and live standings. Physics lives in `web/sim.js`.
 
 ## Run and verify
 
-From the checkout, use Node 22+, `npm ci`, `npm start` and `npm test`. The default port is 3000. The last verified preview ran on port **3022** at [this temporary HTTPS lobby](https://lane-namespace-pct-brother.trycloudflare.com/). Quick Tunnel addresses expire. Check the lobby and multiplayer connection before sharing. For a replacement tunnel to a running server on 3022:
+From the checkout, use Node 22+, `npm ci`, `npm start` and `npm test`. The default port is 3000. The last verified preview ran on port **3022** at [this temporary HTTPS lobby](https://reviews-runtime-surgery-signs.trycloudflare.com/). This address was verified on November 16. Refresh the host and phones to pick up browser changes through the same running tunnel. A new Quick Tunnel prints a new address in its terminal. Check the lobby and multiplayer connection before sharing. For a replacement tunnel to a running server on 3022:
 
 ```powershell
 & 'C:\Program Files (x86)\cloudflared\cloudflared.exe' tunnel --url http://127.0.0.1:3022

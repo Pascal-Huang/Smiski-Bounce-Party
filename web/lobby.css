@@ -321,7 +321,9 @@ body:not(.in-match):has(#room:not([hidden]) #invite:not([hidden])) .brand {
   padding-top: clamp(10px, 3.5dvh, 40px);
   padding-bottom: clamp(14px, 5dvh, 56px);
 }
-#players .figure { width: 145%; left: -22.5%; }
+#players .figure, #players .sprite-frame { width: 145%; left: -22.5%; }
+.sprite-frame { position: absolute; bottom: 46%; aspect-ratio: 1; }
+#players .sprite-frame .figure { inset: 0; width: 100%; }
 
 body:has(#home:not([hidden])) {
   min-height: 100dvh;
@@ -512,4 +514,11 @@ body.trampoline-field::before {
   .game-host.tennis-stadium .arena-layout {
     padding-top: max(0px, calc(36dvh - 12vw - 60px));
   }
+}
+
+.pillar .remove-player { position: absolute; top: 0; right: 0; z-index: 2; width: 16px; height: 16px; padding: 0; border-radius: 50%; font-size: 12px; line-height: 1; }
+.pillar .remove-player::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
+@media (hover: hover) and (pointer: fine) {
+  .pillar .remove-player { opacity: 0; pointer-events: none; }
+  .pillar:hover .remove-player, .pillar:focus-within .remove-player { opacity: 1; pointer-events: auto; }
 }

@@ -69,6 +69,14 @@ const TennisSim = (() => {
     }
     if (s.flight / s.duration > 1.12) point(s);
   }
-  return { create, step, beat };
+  // Roll once per incoming shot at the same timing used for a human return.
+  function botInputs(s, random = Math.random) {
+    if (s.winner !== null || s.pause || s.attempted) return {};
+    const receiver = s.players[1 - s.hitter];
+    const target = Math.ceil(s.duration * beat);
+    if (!receiver.bot || s.flight + 1 !== target) return {};
+    return random() < 0.75 ? { [receiver.slot]: { swing: true, lane: 0 } } : {};
+  }
+  return { create, step, beat, botInputs };
 })();
 if (typeof module !== 'undefined') module.exports = TennisSim;

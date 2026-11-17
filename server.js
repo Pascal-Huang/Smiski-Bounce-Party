@@ -13,7 +13,7 @@ function addresses() {
 
 function snapshot(room) {
   const players = room.players.flatMap((player, slot) => player ? [{
-    name: player.name, slot, connected: Boolean(player.socket)
+    id: player.id, name: player.name, slot, connected: Boolean(player.socket || player.bot), bot: Boolean(player.bot)
   }] : []);
   const count = players.filter(p => p.connected).length;
   const games = ['Bumper Cars', 'Table Tennis', 'Pogo Race'].map(name => ({
@@ -22,7 +22,7 @@ function snapshot(room) {
   return { players, count, games };
 }
 
-function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
+function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000), playtest = process.env.PLAYTEST_MODE === 'true') {
   const rooms = new Map();
   const server = process.env.TLS_CERT && process.env.TLS_KEY
     ? require('node:https').createServer({ cert: readFileSync(process.env.TLS_CERT), key: readFileSync(process.env.TLS_KEY) })
@@ -82,7 +82,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       if (host) {
         if (token !== room.token) return ack({ error: 'Host access required.' });
       } else {
-        player = room.players.find(p => p && p.token === token);
+        player = room.players.find(p => p && !p.bot && p.token === token);
         if (!player) {
           const index = room.players.indexOf(null);
           if (index < 0) return ack({ error: 'Room full' });
@@ -96,9 +96,37 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       }
       socket.data.code = code;
       socket.join(code);
-      ack({ token: player?.token, name: player?.name, id: player?.id, slot: player ? room.players.indexOf(player) : undefined, addresses: host ? addresses() : undefined });
+      ack({ token: player?.token, name: player?.name, id: player?.id, slot: player ? room.players.indexOf(player) : undefined, playtest: Boolean(host && playtest), addresses: host ? addresses() : undefined });
       if (room.match) socket.emit('match', room.match);
       broadcast(code, room);
+      socket.on('removePlayer', (id, reply) => {
+        if (typeof reply !== 'function') return;
+        if (!host) return reply({ error: 'Host access required.' });
+        if (room.match) return reply({ error: 'Return to the lobby first.' });
+        const slot = room.players.findIndex(p => p && p.id === id);
+        if (slot < 0) return reply({ error: 'Player already left.' });
+        const target = room.players[slot];
+        clearTimeout(target.timer);
+        const remote = io.sockets.sockets.get(target.socket);
+        target.socket = null;
+        room.players[slot] = null;
+        if (remote) {
+          remote.emit('removed');
+          remote.disconnect(true);
+        }
+        broadcast(code, room);
+        reply({ ok: true });
+      });
+      socket.on('addBot', reply => {
+        if (typeof reply !== 'function') return;
+        if (!host || !playtest) return reply({ error: 'Playtest host access required.' });
+        if (room.match) return reply({ error: 'Return to the lobby first.' });
+        const slot = room.players.indexOf(null);
+        if (slot < 0) return reply({ error: 'Room full' });
+        room.players[slot] = { id: randomUUID(), name: 'Bot ' + (slot + 1), bot: true };
+        broadcast(code, room);
+        reply({ ok: true });
+      });
       socket.on('start', (request, reply) => {
         if (typeof reply !== 'function') return;
         const name = typeof request === 'string' ? request : request?.game;
@@ -107,7 +135,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         if (!game?.eligible) return reply({ error: 'Player count unavailable.' });
         if (!game.implemented) return reply({ error: 'Game not implemented.' });
         if (room.match && room.match.phase !== 'results') return reply({ error: 'Round already running.' });
-        let players = room.players.flatMap((p, slot) => p?.socket ? [{ slot, id: p.id, name: p.name }] : []);
+        let players = room.players.flatMap((p, slot) => (p?.socket || p?.bot) ? [{ slot, id: p.id, name: p.name, bot: Boolean(p.bot) }] : []);
         if (name === 'Table Tennis') {
           const slots = request.slots;
           if (slots !== undefined) {
@@ -121,8 +149,8 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
         room.driver = socket.id;
         room.match = { id: randomUUID(), game: name, driver: socket.id, phase: 'playing', players };
         if (name === 'Table Tennis') {
-          room.match.phase = reusePaddles ? 'playing' : 'calibration';
-          room.match.players.forEach(p => { p.step = reusePaddles ? 7 : 0; });
+          room.match.phase = reusePaddles || players.every(p => p.bot) ? 'playing' : 'calibration';
+          room.match.players.forEach(p => { p.step = reusePaddles || p.bot ? 7 : 0; });
         }
         io.to(code).emit('match', room.match);
         reply({ ok: true });
@@ -136,7 +164,7 @@ function createLobby(grace = Number(process.env.REJOIN_GRACE_MS || 15000)) {
       socket.on('resetCalibration', id => {
         const match = room.match;
         if (!host || match?.phase !== 'calibration' || !match.calibrationStarted || match.id !== id) return;
-        room.match = { ...match, id: randomUUID(), players: match.players.map(p => ({ ...p, step: 0 })) };
+        room.match = { ...match, id: randomUUID(), players: match.players.map(p => ({ ...p, step: p.bot ? 7 : 0 })) };
         io.to(code).emit('match', room.match);
       });
       socket.on('calibration', data => {
